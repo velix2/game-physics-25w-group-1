@@ -2,3 +2,5 @@ build*/
 imgui.ini
 docs/html
 .DS_Store
+
+.vscode/

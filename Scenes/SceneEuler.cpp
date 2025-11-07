@@ -30,7 +30,7 @@ void SceneEuler::init()
 
 void SceneEuler::simulateStep()
 {
-    if (isSimulationRunning) runSimulationStep(ImGui::GetIO().DeltaTime);
+    if (isSimulationRunning) runSimulationStep(delta_t);
 }
 
 void SceneEuler::runSimulationStep(float stepsize)
@@ -94,7 +94,10 @@ void SceneEuler::onDraw(Renderer &renderer)
 
 void SceneEuler::onGUI()
 {
+    ImGui::InputFloat("Delta Time", &delta_t);
     auto startStopClicked = ImGui::Button(isSimulationRunning ? "Stop Simulation" : "Start Simulation");
+    auto oneStepClicked = ImGui::Button("Run one step");
 
     if (startStopClicked) isSimulationRunning = !isSimulationRunning;
+    if (oneStepClicked) runSimulationStep(delta_t);
 }

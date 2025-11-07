@@ -6,6 +6,8 @@ class SceneEuler : public Scene
 
     // Math
 
+    float delta_t = 0.005f;
+
     virtual void simulateStep();
 
     typedef struct masspoint

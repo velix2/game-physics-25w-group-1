@@ -2,6 +2,7 @@
 #include <map>
 
 #include "SceneSingleStep.h"
+#include "SceneEuler.h"
 
 using SceneCreator = std::function<std::unique_ptr<Scene>()>;
 
@@ -14,5 +15,6 @@ SceneCreator creator()
 
 std::map<std::string, SceneCreator> scenesCreators = {
     {"Single Step", creator<SceneSingleStep>()},
+    {"Euler Simulation", creator<SceneEuler>()},
     // add more Scene types here
 };

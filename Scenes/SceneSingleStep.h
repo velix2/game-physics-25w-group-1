@@ -26,6 +26,8 @@ class SceneSingleStep : public Scene
 
     void mssWithEuler();
 
+    void mssWithMidpoint();
+
     virtual void onGUI() override;
 
     public:

@@ -21,29 +21,29 @@ void SceneComplexSimulation::init()
                           // m1
                           10.0f});
 
-    masspoints.push_back({2, {2.0f, 2.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({3, {4.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({4, {2.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({5, {0.0f, -2.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({6, {-2.0f, -2.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({7, {-4.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
+    masspoints.push_back({2, {2.0f, 2.0f, 0.5f}, {0.0f, 2.0f, 0.0f}, 10.0f});
+    masspoints.push_back({3, {4.0f, 1.0f, 1.0f}, {0.0f, 0.1f, 0.0f}, 10.0f});
+    masspoints.push_back({4, {2.0f, 0.0f, 0.0f}, {0.0f, 0.4f, 0.0f}, 10.0f});
+    masspoints.push_back({5, {0.0f, -2.0f, -0.5f}, {0.0f, 0.0f, 0.0f}, 10.0f});
+    masspoints.push_back({6, {-2.0f, -2.0f, 0.0f}, {0.0f, 0.0f, -1.0f}, 10.0f});
+    masspoints.push_back({7, {-4.0f, 0.0f, 1.5f}, {0.0f, 0.2f, 0.0f}, 10.0f});
     masspoints.push_back({8, {-2.0f, 2.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
-    masspoints.push_back({9, {0.0f, 4.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 10.0f});
+    masspoints.push_back({9, {0.0f, 4.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, 10.0f});
 
     springs.push_back({40.0f,
                        1.0f,
                        masspoints[0],
                        masspoints[1]});
 
-    springs.push_back({40.0f, 1.0f, masspoints[1], masspoints[2]});
+    springs.push_back({40.0f, 8.0f, masspoints[1], masspoints[2]});
     springs.push_back({40.0f, 1.0f, masspoints[2], masspoints[3]});
-    springs.push_back({40.0f, 1.0f, masspoints[3], masspoints[4]});
+    springs.push_back({20.0f, 2.0f, masspoints[3], masspoints[4]});
     springs.push_back({40.0f, 1.0f, masspoints[4], masspoints[5]});
     springs.push_back({40.0f, 1.0f, masspoints[5], masspoints[6]});
-    springs.push_back({40.0f, 1.0f, masspoints[6], masspoints[7]});
-    springs.push_back({40.0f, 1.0f, masspoints[7], masspoints[8]});
-    springs.push_back({40.0f, 1.0f, masspoints[8], masspoints[9]});
-    springs.push_back({40.0f, 1.0f, masspoints[9], masspoints[0]});
+    springs.push_back({50.0f, 4.0f, masspoints[6], masspoints[7]});
+    springs.push_back({40.0f, 1.5f, masspoints[7], masspoints[8]});
+    springs.push_back({10.0f, 1.0f, masspoints[8], masspoints[9]});
+    springs.push_back({40.0f, 2.0f, masspoints[9], masspoints[0]});
 }
 
 void SceneComplexSimulation::simulateStep()
@@ -67,7 +67,7 @@ void SceneComplexSimulation::runSimulationStepWithEuler(float stepsize)
 
     for (auto &spring : springs)
     {
-        calculateElasticForces(spring, elastic_forces);
+        calculateElasticForcesWithGravity(spring, elastic_forces);
     }
 
     for (auto &point : masspoints)
@@ -96,7 +96,7 @@ void SceneComplexSimulation::runSimulationStepWithMidpoint(float stepsize)
     // Forces at n
     for (auto &spring : springs)
     {
-        calculateElasticForces(spring, elastic_forces);
+        calculateElasticForcesWithGravity(spring, elastic_forces);
     }
 
     // integrate midpoint values
@@ -132,11 +132,17 @@ void SceneComplexSimulation::runSimulationStepWithMidpoint(float stepsize)
     }
 }
 
-void SceneComplexSimulation::calculateElasticForces(spring_t &spring, std::vector<glm::vec3> &masspointForces)
+void SceneComplexSimulation::calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces)
 {
     float l = glm::length(spring.p1.position - spring.p2.position);
+    auto down = glm::vec3(0.f,0.f,-1.f);
+    
     auto forceOnP1 = -spring.stiffness * (l - spring.rest_length) * (spring.p1.position - spring.p2.position) / l;
     auto forceOnP2 = -forceOnP1;
+
+    // Gravity
+    forceOnP1 += down * (spring.p1.mass * gravity_accel);
+    forceOnP2 += down * (spring.p2.mass * gravity_accel);
 
     masspointForces[spring.p1.id] += forceOnP1;
     masspointForces[spring.p2.id] += forceOnP2;
@@ -164,6 +170,10 @@ glm::vec3 SceneComplexSimulation::eulerStep(glm::vec3 x_n, glm::vec3 xPrime_n, f
 
 void SceneComplexSimulation::onDraw(Renderer &renderer)
 {
+    // Wireframe cube
+    renderer.drawWireCube(glm::vec3(0), glm::vec3(10), glm::vec3(1));
+
+
     // Draw points
     for (auto &&point : masspoints)
     {
@@ -180,6 +190,8 @@ void SceneComplexSimulation::onDraw(Renderer &renderer)
 void SceneComplexSimulation::onGUI()
 {
     ImGui::InputFloat("Delta Time", &delta_t);
+    ImGui::InputFloat("Gravity Acceleration", &gravity_accel);
+
     auto startStopClicked = ImGui::Button(isSimulationRunning ? "Stop Simulation" : "Start Simulation");
     auto oneStepClicked = ImGui::Button("Run one step");
     ImGui::Separator();

@@ -8,6 +8,8 @@ class SceneComplexSimulation : public Scene
 
     float delta_t = 0.005f;
 
+    float gravity_accel = 9.81f;
+
     virtual void simulateStep();
 
     typedef struct masspoint
@@ -29,7 +31,7 @@ class SceneComplexSimulation : public Scene
     std::vector<masspoint_t> masspoints;
     std::vector<spring_t> springs;
 
-    void calculateElasticForces(spring_t &spring, std::vector<glm::vec3> &masspointForces);
+    void calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces);
 
     void calculateElasticForcesAtMidpoint(spring_t &spring, glm::vec3 p1_midpoint_position, glm::vec3 p2_midpoint_position, std::vector<glm::vec3> &masspointForces);
 

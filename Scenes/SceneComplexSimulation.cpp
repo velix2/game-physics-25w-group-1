@@ -48,6 +48,27 @@ void SceneComplexSimulation::init()
 
 void SceneComplexSimulation::simulateStep()
 {
+    glm::vec3 right = glm::vec3(0, 1, 0);
+    glm::vec3 up = glm::vec3(0, 0, 1);
+
+    // Input handling:
+    // Drag controls
+
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+    {
+        auto drag = ImGui::GetMouseDragDelta(1);
+        if (!(drag.x == 0 && drag.y == 0))
+        {
+            auto dx = drag.x * right;
+            auto dy = -drag.y * up;
+
+            for (auto &&p : masspoints)
+            {
+                p.velocity += (dx + dy) * 0.01f;
+            }
+        }
+    }
+
     if (isSimulationRunning)
         runSimulationStepWithMidpoint(delta_t);
 }
@@ -135,8 +156,8 @@ void SceneComplexSimulation::runSimulationStepWithMidpoint(float stepsize)
 void SceneComplexSimulation::calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces)
 {
     float l = glm::length(spring.p1.position - spring.p2.position);
-    auto down = glm::vec3(0.f,0.f,-1.f);
-    
+    auto down = glm::vec3(0.f, 0.f, -1.f);
+
     auto forceOnP1 = -spring.stiffness * (l - spring.rest_length) * (spring.p1.position - spring.p2.position) / l;
     auto forceOnP2 = -forceOnP1;
 
@@ -172,7 +193,6 @@ void SceneComplexSimulation::onDraw(Renderer &renderer)
 {
     // Wireframe cube
     renderer.drawWireCube(glm::vec3(0), glm::vec3(10), glm::vec3(1));
-
 
     // Draw points
     for (auto &&point : masspoints)

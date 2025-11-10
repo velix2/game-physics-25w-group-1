@@ -28,8 +28,17 @@ class SceneComplexSimulation : public Scene
         masspoint_t &p2;
     } spring_t;
 
+    typedef struct collision_plane 
+    {
+        glm::vec3 surfaceNormal;
+        float offsetAlongNormal;
+    } collision_plane_t;
+
     std::vector<masspoint_t> masspoints;
     std::vector<spring_t> springs;
+    std::vector<collision_plane_t> collision_planes;
+
+    void handleCollision(collision_plane_t &plane, masspoint_t &point);
 
     void calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces);
 

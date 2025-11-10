@@ -44,6 +44,15 @@ void SceneComplexSimulation::init()
     springs.push_back({40.0f, 1.5f, masspoints[7], masspoints[8]});
     springs.push_back({10.0f, 1.0f, masspoints[8], masspoints[9]});
     springs.push_back({40.0f, 2.0f, masspoints[9], masspoints[0]});
+
+    collision_planes.push_back({{1.f, 0.f, 0.f}, -5.f});
+    collision_planes.push_back({{-1.f, 0.f, 0.f}, -5.0f});
+
+    collision_planes.push_back({{0.f, 1.f, 0.f}, -5.0f});
+    collision_planes.push_back({{0.f, -1.f, 0.f}, -5.0f});
+
+    collision_planes.push_back({{0.f, 0.f, 1.f}, -5.0f});
+    collision_planes.push_back({{0.f, 0.f, -1.f}, -5.0f});
 }
 
 void SceneComplexSimulation::simulateStep()
@@ -69,12 +78,23 @@ void SceneComplexSimulation::simulateStep()
         }
     }
 
+    
+
     if (isSimulationRunning)
-        runSimulationStepWithMidpoint(delta_t);
+        runSimulationStep(delta_t);
 }
 
 void SceneComplexSimulation::runSimulationStep(float stepsize)
 {
+    // Collision Handling
+    for (auto &&plane : collision_planes)
+    {
+        for (auto &&point : masspoints)
+        {
+            handleCollision(plane, point);
+        }
+    }
+
     if (isUsingMidpoint)
         runSimulationStepWithMidpoint(stepsize);
     else
@@ -151,6 +171,24 @@ void SceneComplexSimulation::runSimulationStepWithMidpoint(float stepsize)
         point.velocity = new_velocity;
         point.position = new_position;
     }
+}
+
+void SceneComplexSimulation::handleCollision(collision_plane_t &plane, masspoint_t &point)
+{
+    float distanceBetweenSurfaceAndPoint = glm::dot(plane.surfaceNormal, point.position) - plane.offsetAlongNormal;
+
+    // check if collission occured
+    if (distanceBetweenSurfaceAndPoint > 0.0001f)
+        return;
+
+    // reset location
+    point.position += distanceBetweenSurfaceAndPoint * plane.surfaceNormal;
+
+    // mirror velocity
+    //auto reflection = point.velocity - 2.f * glm::dot(point.velocity, plane.surfaceNormal) * plane.surfaceNormal;
+
+    point.velocity = plane.surfaceNormal * glm::length(point.velocity);
+    //point.velocity = reflection;
 }
 
 void SceneComplexSimulation::calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces)

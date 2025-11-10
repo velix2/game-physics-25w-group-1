@@ -21,6 +21,9 @@
 Note that currently _WSL2 on Windows is not supported_ as there are issues with using webGPU on it, however, both Visual Studio 17 (2022) directly on Windows and MinGW are supported as alternatives. If you are facing issues on Windows in general, try cloning the repository again into a path _without any spaces_ and retry the build process. We will be adding a compatibility and common issues list soon.
 
 ## Building and Running the Project
+0.
+Ctrl+shift+p -> cmake: select a kit
+
 1. Everytime you add new files, and once in the beginning, run
 ```
 cmake . -B build
@@ -31,6 +34,10 @@ cmake --build build
 ```
 The output will tell you where the executable is located. You can run it from the command line or from your IDE.
 
+3. 
+```
+./build/Template.exe
+```
 # Project Structure
 Each exercise has its own branch, usually only providing some additional code needed for the exercise.  
 The intro branch already has the completed tutorial code, so you can start from the main branch to go along.

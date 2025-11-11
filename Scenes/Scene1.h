@@ -1,3 +1,6 @@
+#ifndef SCENE1_H
+#define SCENE1_H
+
 #include "Scene.h"
 #include <glm/glm.hpp>
 #include <vector>
@@ -24,3 +27,5 @@ private:
 public:
     virtual void init() override;
 };
+
+#endif

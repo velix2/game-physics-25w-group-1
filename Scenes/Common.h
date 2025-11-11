@@ -14,13 +14,16 @@ struct PointMass
 
     PointMass(glm::vec3 pos, glm::vec3 vel, float mass, bool fixed = false) : position(pos), position2(glm::vec3(0)),
                                                                               velocity(vel), velocity2(glm::vec3(0)),
-                                                                              force(glm::vec3(0)), color(glm::vec4(1)), mass(mass), damping(0),
+                                                                              force(glm::vec3(0)), color(glm::vec4(1)), mass(mass), damping(0.005),
                                                                               fixed(fixed) {};
 
     PointMass() {};
     virtual void integrateEuler(float dt);
     virtual void integrateMidpoint1(float dt);
     virtual void integrateMidpoint2(float dt);
+    virtual void integrateFrogpoint1(float dt);
+    virtual void integrateFrogpoint2(float dt);
+    virtual void integrateLeapfrog(float dt);
 
     virtual void printInfo();
 };
@@ -35,5 +38,5 @@ struct Spring
 
     Spring() {};
 
-    virtual void computeElasticForces(float dt);
+    virtual void computeElasticForces(float dt, bool doDamping = false);
 };

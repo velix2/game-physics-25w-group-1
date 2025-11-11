@@ -3,7 +3,7 @@
 #include <array>
 #include <random>
 
-static const char *integratorNames[] = {"Euler", "Midpoint"};
+static const char *integratorNames[] = {"Euler", "Midpoint", "Leapfrog", "Frogpoint"};
 
 #define MAX_SPRINGS 50
 #define MAX_POINTS 50
@@ -18,6 +18,7 @@ class SceneComplex : public Scene
     int springCount = 0;
 
     float dt = 0.005;
+    bool doDamping = false;
 
     std::random_device rd;
     std::mt19937 gen;
@@ -26,10 +27,17 @@ class SceneComplex : public Scene
     enum class Integrator
     {
         Euler,
-        Midpoint
+        Midpoint,
+        Leapfrog,
+        Frogpoint,
     };
 
-    Integrator integrator = Integrator::Midpoint;
+    Integrator integrator = Integrator::Frogpoint;
+
+    glm::mat4 cameraMatrix = glm::mat4(1);
+    glm::vec3 fwd = glm::vec3(1, 0, 0);
+    glm::vec3 right = glm::vec3(0, 1, 0);
+    glm::vec3 up = glm::vec3(0, 0, 1);
 
     virtual void addPoint();
     virtual void addSpring();

@@ -5,7 +5,7 @@ float dot(glm::vec3 v1, glm::vec3 v2)
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-void Spring::computeElasticForces(float dt)
+void Spring::computeElasticForces(float dt, bool doDamping)
 {
     glm::vec3 lVec = (point1->position - point2->position);
     double l = sqrt(lVec.x * lVec.x + lVec.y * lVec.y + lVec.z * lVec.z);
@@ -30,7 +30,15 @@ void Spring::computeElasticForces(float dt)
     glm::vec3 force = lVec * scaleFactor;
 
     point1->force += force;
+    if (doDamping)
+    {
+        point1->force -= point1->damping * point1->velocity;
+    }
     point2->force += -force;
+    if (doDamping)
+    {
+        point2->force -= point2->damping * point2->velocity;
+    }
 }
 
 void PointMass::integrateEuler(float dt)
@@ -64,6 +72,39 @@ void PointMass::integrateMidpoint2(float dt)
     }
     position = position2 + dt * velocity;
     velocity = velocity2 + dt * (force / mass);
+}
+
+void PointMass::integrateLeapfrog(float dt)
+{
+    if (fixed)
+    {
+        return;
+    }
+    velocity += dt * (force / mass);
+    position += dt * velocity;
+}
+
+void PointMass::integrateFrogpoint1(float dt)
+{
+    if (fixed)
+    {
+        return;
+    }
+    position2 = position;
+    velocity2 = velocity;
+
+    velocity += (dt / 2) * (force / mass);
+    position += (dt / 2) * velocity;
+}
+
+void PointMass::integrateFrogpoint2(float dt)
+{
+    if (fixed)
+    {
+        return;
+    }
+    velocity = velocity2 + dt * (force / mass);
+    position = position2 + dt * velocity;
 }
 
 void PointMass::printInfo()

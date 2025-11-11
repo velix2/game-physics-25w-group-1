@@ -66,7 +66,7 @@ void SceneComplex::init()
         addPoint();
     }
     springCount = 0;
-    float outer_stiffness = 4000;
+    float outer_stiffness = 40000;
     // bottom layer
     springs[springCount++] = Spring(points[0], points[1], 1, outer_stiffness);
     springs[springCount++] = Spring(points[0], points[2], 1, outer_stiffness);
@@ -96,7 +96,7 @@ void SceneComplex::init()
     springs[springCount++] = Spring(points[2], points[1], 1.414, outer_stiffness);
     springs[springCount++] = Spring(points[0], points[3], 1.414, outer_stiffness);
     // middle point
-    float inner_stiffness = 200;
+    float inner_stiffness = 400;
     springs[springCount++] = Spring(points[8], points[0], 0.866, inner_stiffness);
     springs[springCount++] = Spring(points[8], points[1], 0.866, inner_stiffness);
     springs[springCount++] = Spring(points[8], points[2], 0.866, inner_stiffness);
@@ -126,11 +126,25 @@ void SceneComplex::simulateStep()
         }
         for (int i = 0; i < springCount; i++)
         {
-            springs[i].computeElasticForces(dt);
+            springs[i].computeElasticForces(dt, doDamping);
         }
         for (int i = 0; i < pointCount; i++)
         {
             points[i].integrateEuler(dt);
+        }
+        break;
+    case Integrator::Leapfrog:
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].force = glm::vec3(0, 0, -9.81f * points[i].mass);
+        }
+        for (int i = 0; i < springCount; i++)
+        {
+            springs[i].computeElasticForces(dt, doDamping);
+        }
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].integrateLeapfrog(dt);
         }
         break;
     case Integrator::Midpoint:
@@ -140,7 +154,7 @@ void SceneComplex::simulateStep()
         }
         for (int i = 0; i < springCount; i++)
         {
-            springs[i].computeElasticForces(dt);
+            springs[i].computeElasticForces(dt, doDamping);
         }
         for (int i = 0; i < pointCount; i++)
         {
@@ -152,11 +166,37 @@ void SceneComplex::simulateStep()
         }
         for (int i = 0; i < springCount; i++)
         {
-            springs[i].computeElasticForces(dt);
+            springs[i].computeElasticForces(dt, doDamping);
         }
         for (int i = 0; i < pointCount; i++)
         {
             points[i].integrateMidpoint2(dt);
+        }
+        break;
+    case Integrator::Frogpoint:
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].force = glm::vec3(0, 0, -9.81f * points[i].mass);
+        }
+        for (int i = 0; i < springCount; i++)
+        {
+            springs[i].computeElasticForces(dt, doDamping);
+        }
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].integrateFrogpoint1(dt);
+        }
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].force = glm::vec3(0, 0, -9.81f * points[i].mass);
+        }
+        for (int i = 0; i < springCount; i++)
+        {
+            springs[i].computeElasticForces(dt, doDamping);
+        }
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].integrateFrogpoint2(dt);
         }
         break;
     }
@@ -170,11 +210,24 @@ void SceneComplex::simulateStep()
         }
         if (clamp(position.y, -2.5f, 2.5f))
         {
-            points[i].velocity.z *= -0.4;
+            points[i].velocity.y *= -0.4;
         }
         if (clamp(position.z, -2.5f, 2.5f))
         {
             points[i].velocity.z *= -0.4; // collision damping
+        }
+    }
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+    {
+        auto drag = ImGui::GetMouseDragDelta(1);
+        if (!(drag.x == 0 && drag.y == 0))
+        {
+            auto dx = drag.x * right;
+            auto dy = -drag.y * up;
+            for (int i = 0; i < pointCount; i++)
+            {
+                points[i].velocity += (dx + dy) * 0.01f;
+            }
         }
     }
 }
@@ -184,17 +237,22 @@ void SceneComplex::onDraw(Renderer &renderer)
     renderer.drawWireCube(glm::vec3(0), glm::vec3(5), glm::vec3(1));
     for (int i = 0; i < springCount; i++)
     {
-        renderer.drawLine(springs[i].point1->position, springs[i].point2->position, glm::vec4(1));
+        renderer.drawLine(springs[i].point1->position, springs[i].point2->position, glm::vec4(0.5, 0.5, 0.5, 1));
     }
     for (int i = 0; i < pointCount; i++)
     {
-        renderer.drawSphere(points[i].position, 0.1f);
+        renderer.drawSphere(points[i].position, 0.1f, glm::vec4(points[i].mass / 100.0, 1, 1, 1));
     }
+    cameraMatrix = renderer.camera.viewMatrix;
+    fwd = inverse(cameraMatrix) * glm::vec4(0, 0, 1, 0);
+    right = inverse(cameraMatrix) * glm::vec4(1, 0, 0, 0);
+    up = inverse(cameraMatrix) * glm::vec4(0, 1, 0, 0);
 }
 
 void SceneComplex::onGUI()
 {
-    ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
+    ImGui::SliderFloat("Dt", &dt, 0, 0.02f);
+    ImGui::Checkbox("Do damping", &doDamping);
     int current = static_cast<int>(integrator);
     if (ImGui::Combo("Integrator", &current, integratorNames, IM_ARRAYSIZE(integratorNames)))
     {
@@ -209,5 +267,66 @@ void SceneComplex::onGUI()
     if (addSpringButton)
     {
         addSpring();
+    }
+    auto resetVelocities = ImGui::Button("Set all velocities to 0");
+    if (resetVelocities)
+    {
+        for (int i = 0; i < pointCount; i++)
+        {
+            points[i].velocity = glm::vec3(0);
+        }
+    }
+    auto resetPositions = ImGui::Button("Set all positions to 0");
+    if (resetPositions)
+    {
+        for (int i = 0; i < pointCount; i++)
+        {
+            if (!points[i].fixed)
+            {
+                points[i].position = glm::vec3(0);
+            }
+        }
+    }
+    auto fixPoint = ImGui::Button("Fix random point");
+    if (fixPoint)
+    {
+        bool canFix = false;
+        for (int i = 0; i < pointCount; i++)
+        {
+            if (!points[i].fixed)
+            {
+                canFix = true;
+            }
+        }
+        while (canFix)
+        {
+            int i = static_cast<int>(dis(gen) * pointCount);
+            if (!points[i].fixed)
+            {
+                points[i].fixed = true;
+                break;
+            }
+        }
+    }
+    auto unfixPoint = ImGui::Button("Unfix random point");
+    if (unfixPoint)
+    {
+        bool canUnfix = false;
+        for (int i = 0; i < pointCount; i++)
+        {
+            if (points[i].fixed)
+            {
+                canUnfix = true;
+            }
+        }
+        while (canUnfix)
+        {
+            int i = static_cast<int>(dis(gen) * pointCount);
+            if (points[i].fixed)
+            {
+                points[i].fixed = false;
+                break;
+            }
+        }
     }
 }

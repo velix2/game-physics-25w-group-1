@@ -42,7 +42,7 @@ class SceneComplexSimulation : public Scene
 
     void calculateElasticForcesWithGravity(spring_t &spring, std::vector<glm::vec3> &masspointForces);
 
-    void calculateElasticForcesAtMidpoint(spring_t &spring, glm::vec3 p1_midpoint_position, glm::vec3 p2_midpoint_position, std::vector<glm::vec3> &masspointForces);
+    void calculateElasticForcesAtMidpointWithGravity(spring_t &spring, glm::vec3 p1_midpoint_position, glm::vec3 p2_midpoint_position, std::vector<glm::vec3> &masspointForces);
 
     glm::vec3 calculateAcceleration(glm::vec3 force, float mass);
 

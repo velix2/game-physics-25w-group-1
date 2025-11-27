@@ -3,7 +3,7 @@
 
 void SceneComplexSimulation::init()
 {
-    masspoints.push_back({// id
+     masspoints.push_back({// id
                           0,
                           // x0
                           {0.0f, 0.0f, 0.0f},
@@ -43,7 +43,57 @@ void SceneComplexSimulation::init()
     springs.push_back({50.0f, 4.0f, masspoints[6], masspoints[7]});
     springs.push_back({40.0f, 1.5f, masspoints[7], masspoints[8]});
     springs.push_back({10.0f, 1.0f, masspoints[8], masspoints[9]});
-    springs.push_back({40.0f, 2.0f, masspoints[9], masspoints[0]});
+    springs.push_back({40.0f, 2.0f, masspoints[9], masspoints[0]}); 
+/* 
+    // create 3x3x3 masspoints
+    const int N = 3;
+    const float spacing = 2.0f;
+    uint id = 0;
+    for (int ix = 0; ix < N; ++ix)
+    {
+        for (int iy = 0; iy < N; ++iy)
+        {
+            for (int iz = 0; iz < N; ++iz)
+            {
+                glm::vec3 pos = glm::vec3((ix - 1) * spacing, (iy - 1) * spacing, (iz - 1) * spacing);
+                masspoints.push_back({id + 1, pos, glm::vec3(0.0f), 10.0f});
+            }
+        }
+    }
+
+    // connect axis-adjacent neighbors with springs
+    const float stiffness = 50.0f;
+    for (int ix = 0; ix < N; ++ix)
+    {
+        for (int iy = 0; iy < N; ++iy)
+        {
+            for (int iz = 0; iz < N; ++iz)
+            {
+                int idx = ix * N * N + iy * N + iz;
+                // +x neighbor
+                if (ix + 1 < N)
+                {
+                    int nb = (ix + 1) * N * N + iy * N + iz;
+                    float rest_len = glm::length(masspoints[idx].position - masspoints[nb].position);
+                    springs.push_back({stiffness, rest_len, masspoints[idx], masspoints[nb]});
+                }
+                // +y neighbor
+                if (iy + 1 < N)
+                {
+                    int nb = ix * N * N + (iy + 1) * N + iz;
+                    float rest_len = glm::length(masspoints[idx].position - masspoints[nb].position);
+                    springs.push_back({stiffness, rest_len, masspoints[idx], masspoints[nb]});
+                }
+                // +z neighbor
+                if (iz + 1 < N)
+                {
+                    int nb = ix * N * N + iy * N + (iz + 1);
+                    float rest_len = glm::length(masspoints[idx].position - masspoints[nb].position);
+                    springs.push_back({stiffness, rest_len, masspoints[idx], masspoints[nb]});
+                }
+            }
+        }
+    }  */
 
     collision_planes.push_back({{1.f, 0.f, 0.f}, -5.f});
     collision_planes.push_back({{-1.f, 0.f, 0.f}, -5.0f});
@@ -77,8 +127,6 @@ void SceneComplexSimulation::simulateStep()
             }
         }
     }
-
-    
 
     if (isSimulationRunning)
         runSimulationStep(delta_t);
@@ -155,7 +203,7 @@ void SceneComplexSimulation::runSimulationStepWithMidpoint(float stepsize)
     // Calculate forces at midpoint
     for (auto &spring : springs)
     {
-        calculateElasticForcesAtMidpoint(spring, positions_midpoint[spring.p1.id], positions_midpoint[spring.p2.id], elastic_forces_midpoint);
+        calculateElasticForcesAtMidpointWithGravity(spring, positions_midpoint[spring.p1.id], positions_midpoint[spring.p2.id], elastic_forces_midpoint);
     }
 
     // do the midpoint step
@@ -207,11 +255,20 @@ void SceneComplexSimulation::calculateElasticForcesWithGravity(spring_t &spring,
     masspointForces[spring.p2.id] += forceOnP2;
 }
 
-void SceneComplexSimulation::calculateElasticForcesAtMidpoint(spring_t &spring, glm::vec3 p1_midpoint_position, glm::vec3 p2_midpoint_position, std::vector<glm::vec3> &masspointForces)
+void SceneComplexSimulation::calculateElasticForcesAtMidpointWithGravity(spring_t &spring, glm::vec3 p1_midpoint_position, glm::vec3 p2_midpoint_position, std::vector<glm::vec3> &masspointForces)
 {
     float l = glm::length(p1_midpoint_position - p2_midpoint_position);
+    auto down = glm::vec3(0.f, 0.f, -1.f);
+
     auto forceOnP1 = -spring.stiffness * (l - spring.rest_length) * (p1_midpoint_position - p2_midpoint_position) / l;
     auto forceOnP2 = -forceOnP1;
+
+    masspointForces[spring.p1.id] += forceOnP1;
+    masspointForces[spring.p2.id] += forceOnP2;
+
+    // Gravity
+    forceOnP1 += down * (spring.p1.mass * gravity_accel);
+    forceOnP2 += down * (spring.p2.mass * gravity_accel);
 
     masspointForces[spring.p1.id] += forceOnP1;
     masspointForces[spring.p2.id] += forceOnP2;

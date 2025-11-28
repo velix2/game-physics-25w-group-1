@@ -13,7 +13,7 @@ void SceneSingleStep::init()
                                  glm::vec3(1.0f, 0.6f, 0.5f),
                                  ZERO_VECTOR,
                                  2.0f,
-                                 glm::quat(glm::vec3(0.0f, 0.5f * M_PI, 0.0f)), // 90 degrees around z (yaw)
+                                 glm::quat(glm::vec3(0.0f, 0.0f, 0.5f * M_PI)), // 90 degrees around z (yaw)
                                  glm::vec3(0.0f));
 
     auto rigidbodies = std::vector<Rigidbody>({rb});

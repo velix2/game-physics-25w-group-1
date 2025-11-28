@@ -42,14 +42,19 @@ struct Rigidbody
         printf("Mass:\t\t\t" FLOAT_PRECISION "\n", total_mass);
 
         printf("Rotation:\t\t" PRINT_QUAT_FORMAT "\n", PRINT_QUAT_ARGS(rotation));
+        printf("Rotation Matrix:\n");
+        auto rot_mat = glm::mat3_cast(rotation);
+        PrintMat3x3(rot_mat);
 
         printf("Angular Momentum:\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(angular_momentum));
 
         printf("Angular Velocity:\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(angular_velocity));
 
-        printf("Inverted Current Inertia Tensor:\n");
-
+        printf("Current Inverted Inertia Tensor:\n");
         PrintMat3x3(inverse_inertia_tensor);
+
+        printf("Initial Inverted Inertia Tensor:\n");
+        PrintMat3x3(initial_inverse_inertia_tensor);
 
         printf("==================================================\n");
 

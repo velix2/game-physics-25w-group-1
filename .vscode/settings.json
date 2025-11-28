@@ -1,7 +1,0 @@
-{
-    "C_Cpp.default.includePath": [
-        "${workspaceFolder}/**",
-        "${workspaceFolder}/src/**",
-        "${workspaceFolder}/thirdparty/**",
-    ],
-}

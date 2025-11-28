@@ -62,14 +62,19 @@ Point CreatePoint(glm::vec3 world_pos, std::vector<Rigidbody> &rigidbodies, size
 
 Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::vec3 world_initial_velocity, float mass, glm::quat initial_rotation, glm::vec3 initial_angular_momentum)
 {
-    auto inertia_tensor = glm::mat3(0.0f);
+    auto initial_inertia_tensor = glm::mat3(0.0f);
 
     // values from https://en.wikipedia.org/wiki/List_of_moments_of_inertia
-    inertia_tensor[0][0] = mass * (dimensions.y * dimensions.y + dimensions.z * dimensions.z) / 12.0;
-    inertia_tensor[1][1] = mass * (dimensions.x * dimensions.x + dimensions.z * dimensions.z) / 12.0;
-    inertia_tensor[2][2] = mass * (dimensions.x * dimensions.x + dimensions.y * dimensions.y) / 12.0;
+    initial_inertia_tensor[0][0] = mass * (dimensions.y * dimensions.y + dimensions.z * dimensions.z) / 12.0;
+    initial_inertia_tensor[1][1] = mass * (dimensions.x * dimensions.x + dimensions.z * dimensions.z) / 12.0;
+    initial_inertia_tensor[2][2] = mass * (dimensions.x * dimensions.x + dimensions.y * dimensions.y) / 12.0;
 
-    auto inverse_inertia_tensor = glm::inverse(inertia_tensor);
+    auto initial_inverse_inertia_tensor = glm::inverse(initial_inertia_tensor);
+
+    auto rot_matrix = glm::mat3_cast(initial_rotation);
+    auto rot_matrix_T = glm::transpose(rot_matrix);
+
+    auto inverse_inertia_tensor = rot_matrix * initial_inverse_inertia_tensor * rot_matrix_T;
 
     auto angular_velocity = inverse_inertia_tensor * initial_angular_momentum;
 
@@ -82,6 +87,6 @@ Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, g
         initial_angular_momentum,
         angular_velocity,
         inverse_inertia_tensor,
-        inverse_inertia_tensor
+        initial_inverse_inertia_tensor
     });
 }

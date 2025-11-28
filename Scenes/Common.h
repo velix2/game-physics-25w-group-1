@@ -28,7 +28,8 @@ struct Rigidbody
     /// @brief I_0^-1
     glm::mat3x3 initial_inverse_inertia_tensor;
 
-    void PrintState() {
+    void PrintState()
+    {
         printf("================ Rigidbody state: ================\n");
 
         printf("Is fixed?\t\t");
@@ -43,12 +44,27 @@ struct Rigidbody
         printf("Rotation:\t\t" PRINT_QUAT_FORMAT "\n", PRINT_QUAT_ARGS(rotation));
 
         printf("Angular Momentum:\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(angular_momentum));
-        
+
         printf("Angular Velocity:\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(angular_velocity));
+
+        printf("Inverted Current Inertia Tensor:\n");
+
+        PrintMat3x3(inverse_inertia_tensor);
 
         printf("==================================================\n");
 
         printf("\n");
+    }
+
+    void PrintMat3x3(glm::mat3 &m)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            printf("| %5.2f %5.2f %5.2f |\n",
+                   m[0][i],
+                   m[1][i],
+                   m[2][i]);
+        }
     }
 };
 
@@ -59,7 +75,8 @@ struct Point
     size_t rb_idx;
     glm::vec3 x_local;
 
-    void PrintState() {
+    void PrintState()
+    {
         printf("================== Point state: ==================\n");
         printf("World Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_world));
         printf("Local Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_local));

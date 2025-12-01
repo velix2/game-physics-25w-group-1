@@ -25,6 +25,8 @@ void UpdateRigidbodyStep(Rigidbody &rigidbody, std::vector<Point> &points, std::
 
     // Integrate rotation
     rigidbody.rotation = rigidbody.rotation + (delta_t / 2.0f) * glm::quat(0.0f, rigidbody.angular_velocity) * rigidbody.rotation;
+    // Normalize quat
+    rigidbody.rotation = glm::normalize(rigidbody.rotation);
 
     // Integrate angular momentum
     rigidbody.angular_momentum = EulerStep(rigidbody.angular_momentum, torque, delta_t);
@@ -87,6 +89,7 @@ Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, g
         initial_angular_momentum,
         angular_velocity,
         inverse_inertia_tensor,
-        initial_inverse_inertia_tensor
+        initial_inverse_inertia_tensor,
+        dimensions
     });
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Renderer.h"
 #include <vector>
 
@@ -27,6 +29,8 @@ struct Rigidbody
     glm::mat3x3 inverse_inertia_tensor;
     /// @brief I_0^-1
     glm::mat3x3 initial_inverse_inertia_tensor;
+
+    glm::vec3 dimensions;
 
     void PrintState()
     {

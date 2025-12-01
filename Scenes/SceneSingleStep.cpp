@@ -14,25 +14,24 @@ void SceneSingleStep::init()
                                  ZERO_VECTOR,
                                  2.0f,
                                  glm::quat(glm::vec3(0.0f, 0.0f, 0.5f * M_PI)), // 90 degrees around z (yaw)
-                                 glm::vec3(0.0f));
+                                 glm::vec3(0.0f),
+                                false);
 
-    auto rigidbodies = std::vector<Rigidbody>({rb});
 
     auto points = std::vector<Point>({
-        CreatePoint(glm::vec3(0.3f, 0.5f, 0.25f), rigidbodies, 0),    // for applying the force
-        CreatePoint(glm::vec3(-0.3f, -0.5f, -0.25f), rigidbodies, 0), // for reading requested results
+        CreatePointOnRigidbody(glm::vec3(-0.3f, -0.5f, -0.25f), rb), // for reading requested results
     });
 
-    auto forces = std::vector<glm::vec3>({glm::vec3(1, 1, 0), ZERO_VECTOR});
+    rb.ApplyForce(Force({glm::vec3(0.3f, 0.5f, 0.25f), glm::vec3(1, 1, 0)}));
 
     // print initial state of rb and point
     printf("Initial states:\n");
     rb.PrintState();
-    points[1].PrintState();
+    points[0].PrintState();
 
-    UpdateRigidbodyStep(rb, points, forces, TIMESTEP);
+    UpdateRigidbodyStep(rb, TIMESTEP);
 
     printf("After %.2f s:\n", TIMESTEP);
     rb.PrintState();
-    points[1].PrintState();
+    points[0].PrintState();
 }

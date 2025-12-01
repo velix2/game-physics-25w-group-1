@@ -6,10 +6,7 @@ class SceneSimulation : public Scene
     bool should_run = false;
     float delta_t = 0.01f;
 
-    std::vector<Rigidbody> rigidbodies;
-    std::vector<Point> points;
-    std::vector<glm::vec3> forces;
-
+    Rigidbody rb;
     
     void init() override;
     void onDraw(Renderer &renderer) override;

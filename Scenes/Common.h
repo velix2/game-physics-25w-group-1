@@ -5,12 +5,35 @@
 
 #define ZERO_VECTOR glm::vec3(0.0f)
 
-#define FLOAT_PRECISION "%.2f"
+#define FLOAT_PRECISION "%.3f"
 #define PRINT_VEC3_FORMAT "(" FLOAT_PRECISION ", " FLOAT_PRECISION ", " FLOAT_PRECISION ")"
 #define PRINT_VEC3_ARGS(v) (v).x, (v).y, (v).z
 
 #define PRINT_QUAT_FORMAT "(" FLOAT_PRECISION ", " FLOAT_PRECISION ", " FLOAT_PRECISION ", " FLOAT_PRECISION ")"
 #define PRINT_QUAT_ARGS(q) (q).w, (q).x, (q).y, (q).z
+
+struct Point
+{
+    glm::vec3 x_world;
+    glm::vec3 v_world;
+    glm::vec3 x_local;
+
+    void PrintState()
+    {
+        printf("==================== Point state: ====================\n");
+        printf("World Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_world));
+        printf("Local Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_local));
+        printf("Velocity:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(v_world));
+        printf("======================================================\n");
+        printf("\n");
+    }
+};
+
+struct Force {
+    glm::vec3 position;
+    glm::vec3 direction;
+};
+
 
 struct Rigidbody
 {
@@ -29,12 +52,28 @@ struct Rigidbody
     glm::mat3x3 inverse_inertia_tensor;
     /// @brief I_0^-1
     glm::mat3x3 initial_inverse_inertia_tensor;
+    /// @brief q
+    glm::vec3 torque;
+    /// @brief F
+    glm::vec3 total_force;
 
     glm::vec3 dimensions;
 
+    std::vector<Point> points;
+
+    void ApplyForce(const Force &force) {
+        total_force += force.direction;
+        
+        auto local_force_position = force.position - x_cm_world;
+
+        // update torque
+        auto cross = glm::cross(local_force_position, force.direction);
+        torque += cross;
+    }
+
     void PrintState()
     {
-        printf("================ Rigidbody state: ================\n");
+        printf("================== Rigidbody state: ==================\n");
 
         printf("Is fixed?\t\t");
         printf(is_fixed ? "yes\n" : "no\n");
@@ -60,7 +99,7 @@ struct Rigidbody
         printf("Initial Inverted Inertia Tensor:\n");
         PrintMat3x3(initial_inverse_inertia_tensor);
 
-        printf("==================================================\n");
+        printf("======================================================\n");
 
         printf("\n");
     }
@@ -77,28 +116,10 @@ struct Rigidbody
     }
 };
 
-struct Point
-{
-    glm::vec3 x_world;
-    glm::vec3 v_world;
-    size_t rb_idx;
-    glm::vec3 x_local;
-
-    void PrintState()
-    {
-        printf("================== Point state: ==================\n");
-        printf("World Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_world));
-        printf("Local Position:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(x_local));
-        printf("Velocity:\t\t" PRINT_VEC3_FORMAT "\n", PRINT_VEC3_ARGS(v_world));
-        printf("==================================================\n");
-        printf("\n");
-    }
-};
-
 inline glm::vec3 EulerStep(glm::vec3 x, glm::vec3 x_prime, float h);
 
-Point CreatePoint(glm::vec3 world_pos, std::vector<Rigidbody> &rigidbodies, size_t rigidbody_index);
+void UpdateRigidbodyStep(Rigidbody &rigidbody, float delta_t);
 
-Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::vec3 world_initial_velocity, float mass, glm::quat initial_rotation, glm::vec3 initial_angular_momentum);
+Point CreatePointOnRigidbody(glm::vec3 world_pos, Rigidbody &rb);
 
-void UpdateRigidbodyStep(Rigidbody &rigidbody, std::vector<Point> &points, std::vector<glm::vec3> &forces_world, float delta_t);
+Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::vec3 world_initial_velocity, float mass, glm::quat initial_rotation, glm::vec3 initial_angular_momentum, bool generate_corner_points);

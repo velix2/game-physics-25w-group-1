@@ -14,9 +14,6 @@ void SceneSimulation::init()
                             glm::vec3(0.0f),
                             true);
 
-    // CreatePointOnRigidbody(glm::vec3(0.3f, 0.5f, 0.25f), rb);
-    // CreatePointOnRigidbody(glm::vec3(-0.3f, -0.5f, -0.25f), rb);
-
     // Initial force
     rb.ApplyForce(Force({glm::vec3(0.3f, 0.5f, 0.25f), glm::vec3(1, 1, 0)}));
 }
@@ -28,7 +25,7 @@ void SceneSimulation::onDraw(Renderer &renderer)
     // draw rigidbody
     renderer.drawCube(rb.x_cm_world, rb.rotation, rb.dimensions, RB_COLOR);
 
-    // draw force points
+    // draw points
     for (auto &p : rb.points)
     {
         renderer.drawSphere(p.x_world, 0.02f);
@@ -41,12 +38,6 @@ void SceneSimulation::simulateStep()
         return;
 
     UpdateRigidbodyStep(rb, delta_t);
-
-    // // clear forces
-    // for (size_t i = 0; i < forces.size(); i++)
-    // {
-    //     forces[i] = ZERO_VECTOR;
-    // }
 }
 
 void SceneSimulation::onGUI()

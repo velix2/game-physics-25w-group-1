@@ -1,5 +1,4 @@
 #include "Scene.h"
-#include "Common.h"
 
 class SceneSimulation : public Scene
 {

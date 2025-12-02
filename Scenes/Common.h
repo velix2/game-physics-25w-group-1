@@ -3,6 +3,8 @@
 #include "Renderer.h"
 #include <vector>
 
+#include "util/CollisionDetection.h"
+
 #define ZERO_VECTOR glm::vec3(0.0f)
 
 #define FLOAT_PRECISION "%.3f"
@@ -29,11 +31,11 @@ struct Point
     }
 };
 
-struct Force {
+struct Force
+{
     glm::vec3 position;
     glm::vec3 direction;
 };
-
 
 struct Rigidbody
 {
@@ -61,9 +63,20 @@ struct Rigidbody
 
     std::vector<Point> points;
 
-    void ApplyForce(const Force &force) {
+    glm::vec3 WorldPositionToLocalPosition(const glm::vec3 world) const
+    {
+        auto local_pos = world - x_cm_world;
+
+        // Revert body's rotation
+        local_pos = glm::inverse(glm::mat3_cast(rotation)) * local_pos;
+
+        return local_pos;
+    }
+
+    void ApplyForce(const Force &force)
+    {
         total_force += force.direction;
-        
+
         auto local_force_position = force.position - x_cm_world;
 
         // update torque
@@ -123,3 +136,8 @@ void UpdateRigidbodyStep(Rigidbody &rigidbody, float delta_t);
 Point CreatePointOnRigidbody(glm::vec3 world_pos, Rigidbody &rb);
 
 Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::vec3 world_initial_velocity, float mass, glm::quat initial_rotation, glm::vec3 initial_angular_momentum, bool generate_corner_points);
+
+glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale, const glm::quat &rotation);
+
+void HandleCollision(Rigidbody &rb1, Rigidbody &rb2);
+void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info);

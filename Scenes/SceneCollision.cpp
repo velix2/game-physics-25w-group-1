@@ -6,15 +6,15 @@ void SceneCollision::init()
     // Setup rigidbodies with intial velocity
     rb1 = CreateBoxRigidbody(glm::vec3(0, -2.5f, 0),
                              glm::vec3(1),
-                             glm::vec3(0, 2, 0),
-                             3.5f,
+                             glm::vec3(0, 5, 0),
+                             1.5f,
                              glm::quat(glm::vec3(0.25f * M_PI)), // 45 degrees around each axis
                              ZERO_VECTOR,
                              true);
 
     rb2 = CreateBoxRigidbody(glm::vec3(0, 2.5f, 0),
                              glm::vec3(1, 0.5f, 1),
-                             glm::vec3(0, -0.5f, 0),
+                             glm::vec3(0, -2, 0),
                              1.5f,
                              glm::quat(ZERO_VECTOR), // no rotation
                              ZERO_VECTOR,
@@ -47,6 +47,8 @@ void SceneCollision::simulateStep()
 
     UpdateRigidbodyStep(rb1, delta_t);
     UpdateRigidbodyStep(rb2, delta_t);
+
+    HandleCollision(rb1, rb2);
 }
 
 void SceneCollision::onGUI()
@@ -55,3 +57,4 @@ void SceneCollision::onGUI()
 
     ImGui::Checkbox("Simulation running", &should_run);
 }
+

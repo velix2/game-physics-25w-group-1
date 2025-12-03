@@ -84,6 +84,11 @@ struct Rigidbody
         torque += cross;
     }
 
+    void ApplyGravity(float g)
+    {
+        total_force += glm::vec3(0, 0, -g);
+    }
+
     void PrintState()
     {
         printf("================== Rigidbody state: ==================\n");
@@ -143,3 +148,5 @@ glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale
 
 void HandleCollision(Rigidbody &rb1, Rigidbody &rb2, float c);
 void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info, float c);
+
+glm::vec3 RandomVec3();

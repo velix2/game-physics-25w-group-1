@@ -8,7 +8,7 @@ void SceneCollision::init()
                              glm::vec3(1),
                              glm::vec3(0, 1, 0),
                              10,
-                             glm::quat(glm::vec3(0.25f * M_PI)), // 45 degrees around each axis
+                             glm::normalize(glm::quat(glm::vec3(0.25f * M_PI))), // 45 degrees around each axis
                              ZERO_VECTOR,
                              true);
 

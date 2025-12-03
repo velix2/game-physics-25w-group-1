@@ -121,7 +121,7 @@ Rigidbody CreateFixedBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensio
 {
 
     auto rb = Rigidbody({
-        false,
+        true,
         world_pos_center,
         ZERO_VECTOR,
         10000000,
@@ -180,8 +180,6 @@ void HandleCollision(Rigidbody &rb1, Rigidbody &rb2, float c)
     if (!coll_info.isColliding)
         return;
 
-    printf("Collision happened!\n");
-
     CalculateAndApplyImpulse(rb1, rb2, coll_info, c);
 }
 
@@ -193,9 +191,6 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
 
     auto n = info.normalWorld;
     auto v_rel_dot_n = glm::dot(v_rel, n);
-
-    if (v_rel_dot_n > 0)
-        return; // bodies are separating, return early
 
     float numerator = -(1 + c) * v_rel_dot_n;
 
@@ -219,4 +214,12 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
         rb_B.v_cm_world = rb_B.v_cm_world - J * n / rb_B.total_mass;
         rb_B.angular_momentum = rb_B.angular_momentum - glm::cross(x_b, J * n);
     }
+}
+/// @brief Returns a random vec3 with each component in [0,1]
+/// @return a random vec3 with each component in [0,1]
+glm::vec3 RandomVec3()
+{
+    return glm::vec3(static_cast<float>(rand()) / RAND_MAX,
+                     static_cast<float>(rand()) / RAND_MAX,
+                     static_cast<float>(rand()) / RAND_MAX);
 }

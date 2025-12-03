@@ -116,13 +116,6 @@ Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, g
 
 glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale, const glm::quat &rotation)
 {
-    // auto mat = glm::mat4(1); // identity
-
-    // mat = glm::scale(mat, scale); // scale
-    // mat = glm::mat4_cast(rotation) * mat; // rotation
-    // mat = glm::translate(mat, translation);
-
-    // return mat;
     glm::mat4 rotationMatrix = glm::toMat4(rotation);
     glm::mat4 scaleMatrix = glm::scale(glm::mat4(1), scale);
     glm::mat4 translationMatrix = glm::translate(glm::mat4(1), translation);
@@ -132,23 +125,24 @@ glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale
 void HandleCollision(Rigidbody &rb1, Rigidbody &rb2)
 {
     auto rb1_mat = GetObjectMatrix(rb1.x_cm_world, rb1.dimensions, rb1.rotation);
-    auto rb2_mat = GetObjectMatrix(rb2.x_cm_world,rb2.dimensions, rb2.rotation);
+    auto rb2_mat = GetObjectMatrix(rb2.x_cm_world, rb2.dimensions, rb2.rotation);
 
     auto coll_info = collisionTools::checkCollisionSAT(rb1_mat, rb2_mat);
 
     if (!coll_info.isColliding)
         return;
 
+    printf("Collision happened!\n");
+
     CalculateAndApplyImpulse(rb1, rb2, coll_info);
 }
 
 void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info)
 {
-    float c = 0.1f;
+
+    float c = 0.8f;
 
     auto v_rel = rb_A.v_cm_world - rb_B.v_cm_world;
-    // auto x_a = rb_A.WorldPositionToLocalPosition(info.collisionPointWorld);
-    // auto x_b = rb_B.WorldPositionToLocalPosition(info.collisionPointWorld);
     auto x_a = info.collisionPointWorld - rb_A.x_cm_world;
     auto x_b = info.collisionPointWorld - rb_B.x_cm_world;
 
@@ -156,7 +150,7 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
 
     float numerator = -(1 + c) * glm::dot(v_rel, n);
     float denominator_A = 1 / rb_A.total_mass + glm::dot(rb_A.inverse_inertia_tensor * glm::cross(glm::cross(x_a, n), x_a), n);
-    float denominator_B = 1 / rb_B.total_mass + glm::dot(rb_B.inverse_inertia_tensor * glm::cross(glm::cross(x_b, n), x_a), n);
+    float denominator_B = 1 / rb_B.total_mass + glm::dot(rb_B.inverse_inertia_tensor * glm::cross(glm::cross(x_b, n), x_b), n);
 
     auto J = numerator / (denominator_A + denominator_B);
 
@@ -165,4 +159,9 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
 
     rb_A.angular_momentum = rb_A.angular_momentum + glm::cross(x_a, J * n);
     rb_B.angular_momentum = rb_B.angular_momentum - glm::cross(x_b, J * n);
+
+    // displace bodies from each other to avoid repeating collision
+    float epsilon = info.depth + 0.01f;
+    rb_A.x_cm_world += epsilon * n;
+    rb_B.x_cm_world -= epsilon * n;
 }

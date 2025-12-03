@@ -6,16 +6,16 @@ void SceneCollision::init()
     // Setup rigidbodies with intial velocity
     rb1 = CreateBoxRigidbody(glm::vec3(0, -2.5f, 0),
                              glm::vec3(1),
-                             glm::vec3(0, 5, 0),
-                             1.5f,
+                             glm::vec3(0, 1, 0),
+                             1,
                              glm::quat(glm::vec3(0.25f * M_PI)), // 45 degrees around each axis
                              ZERO_VECTOR,
                              true);
 
     rb2 = CreateBoxRigidbody(glm::vec3(0, 2.5f, 0),
                              glm::vec3(1, 0.5f, 1),
-                             glm::vec3(0, -2, 0),
-                             1.5f,
+                             glm::vec3(0, -5, 0),
+                             1,
                              glm::quat(ZERO_VECTOR), // no rotation
                              ZERO_VECTOR,
                              true);

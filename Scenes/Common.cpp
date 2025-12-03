@@ -2,6 +2,9 @@
 
 void UpdateRigidbodyStep(Rigidbody &rigidbody, float delta_t)
 {
+    if (rigidbody.is_fixed)
+        return;
+
     // Euler step for x_cm
     rigidbody.x_cm_world = EulerStep(rigidbody.x_cm_world, rigidbody.v_cm_world, delta_t);
 
@@ -114,6 +117,51 @@ Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, g
     return rb;
 }
 
+Rigidbody CreateFixedBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::quat initial_rotation, bool generate_corner_points)
+{
+
+    auto rb = Rigidbody({
+        false,
+        world_pos_center,
+        ZERO_VECTOR,
+        10000000,
+        initial_rotation,
+        ZERO_VECTOR,
+        ZERO_VECTOR,
+        glm::mat3(0), // inertia tensor set to zero cuz fixed
+        glm::mat3(0), // inertia tensor set to zero cuz fixed
+        ZERO_VECTOR,
+        ZERO_VECTOR,
+        dimensions,
+    });
+    rb.points = std::vector<Point>();
+
+    // Corner point creation
+    if (generate_corner_points)
+    {
+        rb.points.resize(8);
+        glm::vec3 half = 0.5f * dimensions;
+
+        int index = 0;
+        for (int xi = -1; xi <= 1; xi += 2)
+        {
+            for (int yi = -1; yi <= 1; yi += 2)
+            {
+                for (int zi = -1; zi <= 1; zi += 2)
+                {
+                    glm::vec3 local = glm::vec3(xi * half.x, yi * half.y, zi * half.z);
+                    rb.points[index].x_local = local;
+                    rb.points[index].x_world = rb.x_cm_world + rb.rotation * local;
+                    rb.points[index].v_world = ZERO_VECTOR;
+                    index++;
+                }
+            }
+        }
+    }
+
+    return rb;
+}
+
 glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale, const glm::quat &rotation)
 {
     glm::mat4 rotationMatrix = glm::toMat4(rotation);
@@ -122,7 +170,7 @@ glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale
     return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
-void HandleCollision(Rigidbody &rb1, Rigidbody &rb2)
+void HandleCollision(Rigidbody &rb1, Rigidbody &rb2, float c)
 {
     auto rb1_mat = GetObjectMatrix(rb1.x_cm_world, rb1.dimensions, rb1.rotation);
     auto rb2_mat = GetObjectMatrix(rb2.x_cm_world, rb2.dimensions, rb2.rotation);
@@ -134,14 +182,11 @@ void HandleCollision(Rigidbody &rb1, Rigidbody &rb2)
 
     printf("Collision happened!\n");
 
-    CalculateAndApplyImpulse(rb1, rb2, coll_info);
+    CalculateAndApplyImpulse(rb1, rb2, coll_info, c);
 }
 
-void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info)
+void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info, float c)
 {
-
-    float c = 1;
-
     auto v_rel = rb_A.v_cm_world - rb_B.v_cm_world;
     auto x_a = info.collisionPointWorld - rb_A.x_cm_world;
     auto x_b = info.collisionPointWorld - rb_B.x_cm_world;
@@ -149,17 +194,29 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
     auto n = info.normalWorld;
     auto v_rel_dot_n = glm::dot(v_rel, n);
 
-    if (v_rel_dot_n > 0) return; // bodies are separating, return early
+    if (v_rel_dot_n > 0)
+        return; // bodies are separating, return early
 
     float numerator = -(1 + c) * v_rel_dot_n;
-    float denominator_A = 1 / rb_A.total_mass + glm::dot(rb_A.inverse_inertia_tensor * glm::cross(glm::cross(x_a, n), x_a), n);
-    float denominator_B = 1 / rb_B.total_mass + glm::dot(rb_B.inverse_inertia_tensor * glm::cross(glm::cross(x_b, n), x_b), n);
+
+    float denominator_A = 0;
+    if (!rb_A.is_fixed)
+        denominator_A = 1 / rb_A.total_mass + glm::dot(rb_A.inverse_inertia_tensor * glm::cross(glm::cross(x_a, n), x_a), n);
+
+    float denominator_B = 0;
+    if (!rb_B.is_fixed)
+        denominator_B = 1 / rb_B.total_mass + glm::dot(rb_B.inverse_inertia_tensor * glm::cross(glm::cross(x_b, n), x_b), n);
 
     auto J = numerator / (denominator_A + denominator_B);
 
-    rb_A.v_cm_world = rb_A.v_cm_world + J * n / rb_A.total_mass;
-    rb_B.v_cm_world = rb_B.v_cm_world - J * n / rb_B.total_mass;
-
-    rb_A.angular_momentum = rb_A.angular_momentum + glm::cross(x_a, J * n);
-    rb_B.angular_momentum = rb_B.angular_momentum - glm::cross(x_b, J * n);
+    if (!rb_A.is_fixed)
+    {
+        rb_A.v_cm_world = rb_A.v_cm_world + J * n / rb_A.total_mass;
+        rb_A.angular_momentum = rb_A.angular_momentum + glm::cross(x_a, J * n);
+    }
+    if (!rb_B.is_fixed)
+    {
+        rb_B.v_cm_world = rb_B.v_cm_world - J * n / rb_B.total_mass;
+        rb_B.angular_momentum = rb_B.angular_momentum - glm::cross(x_b, J * n);
+    }
 }

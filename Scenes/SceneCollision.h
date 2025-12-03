@@ -8,6 +8,8 @@ class SceneCollision : public Scene
     bool should_run = false;
     float delta_t = 0.01f;
 
+    float coefficient_of_restitution = 1;
+
     Rigidbody rb1, rb2;
 
     void init() override;

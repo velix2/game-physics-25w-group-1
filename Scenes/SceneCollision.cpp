@@ -19,6 +19,8 @@ void SceneCollision::init()
                              glm::quat(ZERO_VECTOR), // no rotation
                              ZERO_VECTOR,
                              true);
+    //rb2 = CreateFixedBoxRigidbody(glm::vec3(0, 2.5f, 0),
+    //                              glm::vec3(1, 0.5f, 1), glm::quat(ZERO_VECTOR), false);
 }
 
 void SceneCollision::onDraw(Renderer &renderer)
@@ -48,13 +50,13 @@ void SceneCollision::simulateStep()
     UpdateRigidbodyStep(rb1, delta_t);
     UpdateRigidbodyStep(rb2, delta_t);
 
-    HandleCollision(rb1, rb2);
+    HandleCollision(rb1, rb2, coefficient_of_restitution);
 }
 
 void SceneCollision::onGUI()
 {
     ImGui::InputFloat("Delta Time", &delta_t);
+    ImGui::SliderFloat("Coefficient of restitution", &coefficient_of_restitution, 0, 1);
 
     ImGui::Checkbox("Simulation running", &should_run);
 }
-

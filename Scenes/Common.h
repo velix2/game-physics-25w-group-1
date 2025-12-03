@@ -137,7 +137,9 @@ Point CreatePointOnRigidbody(glm::vec3 world_pos, Rigidbody &rb);
 
 Rigidbody CreateBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::vec3 world_initial_velocity, float mass, glm::quat initial_rotation, glm::vec3 initial_angular_momentum, bool generate_corner_points);
 
+Rigidbody CreateFixedBoxRigidbody(glm::vec3 world_pos_center, glm::vec3 dimensions, glm::quat initial_rotation, bool generate_corner_points);
+
 glm::mat4x4 GetObjectMatrix(const glm::vec3 &translation, const glm::vec3 &scale, const glm::quat &rotation);
 
-void HandleCollision(Rigidbody &rb1, Rigidbody &rb2);
-void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info);
+void HandleCollision(Rigidbody &rb1, Rigidbody &rb2, float c);
+void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info, float c);

@@ -7,7 +7,7 @@ void SceneCollision::init()
     rb1 = CreateBoxRigidbody(glm::vec3(0, -2.5f, 0),
                              glm::vec3(1),
                              glm::vec3(0, 1, 0),
-                             1,
+                             10,
                              glm::quat(glm::vec3(0.25f * M_PI)), // 45 degrees around each axis
                              ZERO_VECTOR,
                              true);

@@ -140,15 +140,18 @@ void HandleCollision(Rigidbody &rb1, Rigidbody &rb2)
 void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info)
 {
 
-    float c = 0.8f;
+    float c = 1;
 
     auto v_rel = rb_A.v_cm_world - rb_B.v_cm_world;
     auto x_a = info.collisionPointWorld - rb_A.x_cm_world;
     auto x_b = info.collisionPointWorld - rb_B.x_cm_world;
 
     auto n = info.normalWorld;
+    auto v_rel_dot_n = glm::dot(v_rel, n);
 
-    float numerator = -(1 + c) * glm::dot(v_rel, n);
+    if (v_rel_dot_n > 0) return; // bodies are separating, return early
+
+    float numerator = -(1 + c) * v_rel_dot_n;
     float denominator_A = 1 / rb_A.total_mass + glm::dot(rb_A.inverse_inertia_tensor * glm::cross(glm::cross(x_a, n), x_a), n);
     float denominator_B = 1 / rb_B.total_mass + glm::dot(rb_B.inverse_inertia_tensor * glm::cross(glm::cross(x_b, n), x_b), n);
 
@@ -159,9 +162,4 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
 
     rb_A.angular_momentum = rb_A.angular_momentum + glm::cross(x_a, J * n);
     rb_B.angular_momentum = rb_B.angular_momentum - glm::cross(x_b, J * n);
-
-    // displace bodies from each other to avoid repeating collision
-    float epsilon = info.depth + 0.01f;
-    rb_A.x_cm_world += epsilon * n;
-    rb_B.x_cm_world -= epsilon * n;
 }

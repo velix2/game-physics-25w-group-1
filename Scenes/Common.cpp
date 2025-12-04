@@ -195,6 +195,19 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
     if (v_rel_dot_n > 0)
         return; // bodies are separating, return early
 
+    // Position correction
+    auto depth = info.depth;
+    if (depth > 0.001f)
+    {
+        float correction = depth * 0.8f; // 80% correction
+
+        // Only move dynamic bodies
+        if (!rb_A.is_fixed)
+            rb_A.x_cm_world += n * correction;
+        if (!rb_B.is_fixed)
+            rb_B.x_cm_world -= n * correction;
+    }
+
     float numerator = -(1 + c) * v_rel_dot_n;
 
     float denominator_A = 0;

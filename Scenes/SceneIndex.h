@@ -1,10 +1,9 @@
 #include "Scene.h"
+#include "SingleStep.h"
+#include "Simulation.h"
+#include "Collision.h"
+#include "Complex.h"
 #include <map>
-
-#include "Scene1.h"
-#include "Scene2.h"
-#include "Scene3.h"
-#include "Scene4.h"
 
 using SceneCreator = std::function<std::unique_ptr<Scene>()>;
 
@@ -16,9 +15,9 @@ SceneCreator creator()
 }
 
 std::map<std::string, SceneCreator> scenesCreators = {
-    {"Single Step", creator<Scene1>()},
-    {"Euler Simulation", creator<Scene2>()},
-    {"Midpoint Simulation", creator<Scene3>()},
-    {"Complex Simulation", creator<Scene4>()},
+    {"Single Step", creator<SingleStep>()},
+    {"Simulation", creator<Simulation>()},
+    {"Collision", creator<Collision>()},
+    {"Complex", creator<Complex>()},
     // add more Scene types here
 };

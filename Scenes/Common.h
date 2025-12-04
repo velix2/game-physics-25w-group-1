@@ -6,6 +6,7 @@
 #include "util/CollisionDetection.h"
 
 #define ZERO_VECTOR glm::vec3(0.0f)
+#define M_PI 3.14159265358979323846
 
 #define FLOAT_PRECISION "%.3f"
 #define PRINT_VEC3_FORMAT "(" FLOAT_PRECISION ", " FLOAT_PRECISION ", " FLOAT_PRECISION ")"

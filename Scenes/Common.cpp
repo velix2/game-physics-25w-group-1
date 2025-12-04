@@ -192,8 +192,8 @@ void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionI
     auto n = info.normalWorld;
     auto v_rel_dot_n = glm::dot(v_rel, n);
 
-    //if (v_rel_dot_n > 0)
-    //    return; // bodies are separating, return early
+    if (v_rel_dot_n > 0)
+        return; // bodies are separating, return early
 
     float numerator = -(1 + c) * v_rel_dot_n;
 

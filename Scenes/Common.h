@@ -132,6 +132,11 @@ struct Rigidbody
                    m[2][i]);
         }
     }
+
+    glm::vec3 GetVelocityAt(glm::vec3 worldPos)
+    {
+        return v_cm_world + glm::cross(angular_velocity, WorldPositionToLocalPosition(worldPos));
+    }
 };
 
 inline glm::vec3 EulerStep(glm::vec3 x, glm::vec3 x_prime, float h);

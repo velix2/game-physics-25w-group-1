@@ -185,15 +185,15 @@ void HandleCollision(Rigidbody &rb1, Rigidbody &rb2, float c)
 
 void CalculateAndApplyImpulse(Rigidbody &rb_A, Rigidbody &rb_B, const CollisionInfo &info, float c)
 {
-    auto v_rel = rb_A.v_cm_world - rb_B.v_cm_world;
+    auto v_rel = rb_A.GetVelocityAt(info.collisionPointWorld) - rb_B.GetVelocityAt(info.collisionPointWorld);
     auto x_a = info.collisionPointWorld - rb_A.x_cm_world;
     auto x_b = info.collisionPointWorld - rb_B.x_cm_world;
 
     auto n = info.normalWorld;
     auto v_rel_dot_n = glm::dot(v_rel, n);
 
-    if (v_rel_dot_n > 0)
-        return; // bodies are separating, return early
+    //if (v_rel_dot_n > 0)
+    //    return; // bodies are separating, return early
 
     float numerator = -(1 + c) * v_rel_dot_n;
 

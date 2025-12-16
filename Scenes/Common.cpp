@@ -3,6 +3,8 @@
 #include <random>
 #include <chrono>
 
+#include "util/pcgsolver.h"
+
 void explicitStep(TempField &temp_field, float delta_t)
 {
     // New field
@@ -45,6 +47,52 @@ void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<f
 
     auto new_temp = delta_change * delta_t + T_center;
     updated_temp_field[i][j] = new_temp;
+}
+
+void implicitStep(TempField &temp_field, float delta_t)
+{
+    auto deltaX = temp_field.deltaX();
+    auto deltaY = temp_field.deltaY();
+    auto C_x = (temp_field.getThermalDiffusivity() * delta_t) / (deltaX * deltaX);
+    auto C_y = (temp_field.getThermalDiffusivity() * delta_t) / (deltaY * deltaY);
+
+    // TODO validate
+    auto center_coeff = 1 + 2 * C_x + 2 * C_y;
+    auto up_coeff = -C_y;
+    auto down_coeff = -C_y;
+
+    auto T_cur = temp_field.getFlattenedTemperatureField();
+    auto T_next = std::vector<float>(T_cur.size());
+
+    // Build matrix
+    SparseMatrixf matrix(temp_field.totalSize());
+
+    auto m = temp_field.getM();
+    auto n = temp_field.getN();
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {     
+            matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j), center_coeff);
+
+            if (i > 0)      matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i - 1, j), -C_x);
+            if (i < m - 1)  matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i + 1, j), -C_x);
+            if (j > 0)      matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j - 1), -C_y);
+            if (j < n - 1)  matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j + 1), -C_y);
+        }
+    }
+
+    SparsePCGSolver<float> solver;
+    float relative_residual;
+    int iterations;
+
+    bool success = solver.solve(matrix, T_cur, T_next, relative_residual, iterations, 2);
+
+    if (success) {
+        temp_field.applyFlattenedTemperatureField(std::move(T_next));
+    } else {
+        fprintf(stderr, "PCG failed to converge in %d iterations\n", iterations);
+    }
 }
 
 TempField::TempField()
@@ -107,6 +155,45 @@ int TempField::getN()
 int TempField::totalSize()
 {
     return getN() * getM();
+}
+
+void TempField::applyFlattenedTemperatureField(std::vector<float> flattened)
+{
+    if (flattened.size() != totalSize())
+    {
+        throw std::invalid_argument("Flattened temperature field size does not match total size of TempField.");
+    }
+
+    int m = getM();
+    int n = getN();
+    for (int i = 0; i < m; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            temp_field[i][j] = flattened[i * n + j];
+        }
+    }
+}
+
+std::vector<float> TempField::getFlattenedTemperatureField()
+{
+    auto flattened = std::vector<float>(totalSize());
+
+    int m = getM();
+    int n = getN();
+    for (int i = 0; i < m; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            flattened[i * n + j] = temp_field[i][j];
+        }
+    }
+    return flattened;
+}
+
+int TempField::flattenedIndexFrom2DIndex(int i, int j)
+{
+    return i * getN() + j;
 }
 
 std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val)

@@ -70,6 +70,12 @@ public:
 
     int totalSize();
 
+    void applyFlattenedTemperatureField(std::vector<float> flattened);
+
+    std::vector<float> getFlattenedTemperatureField();
+
+    int flattenedIndexFrom2DIndex(int i, int j);
+
     // Getters
     const std::vector<std::vector<float>> &getTempField() const { return temp_field; }
     float getThermalDiffusivity() const { return thermal_diffusivity; }
@@ -92,6 +98,8 @@ const glm::vec4 WARM_COLOR = glm::vec4(1, 0.3f, 0.1f, 1);
 
 void explicitStep(TempField &temp_field, float delta_t);
 void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<float>> &updated_temp_field, int i, int j, float delta_t);
+
+void implicitStep(TempField &temp_field, float delta_t);
 
 /**
  * @brief Generates a 2D float vector initialized with random noise.

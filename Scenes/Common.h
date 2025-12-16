@@ -111,6 +111,7 @@ void implicitStep(TempField &temp_field, float delta_t);
  * @return std::vector<std::vector<float>> The initialized 2D vector.
  */
 std::vector<std::vector<float>> generatePixelWiseRandomField(int m, int n, float min_val, float max_val);
+std::vector<std::vector<float>> generateSineWaveField(int m, int n, float amplitude, float repetitions);
 
 template <typename T>
 T inverse_lerp(T a, T b, T x);

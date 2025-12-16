@@ -219,6 +219,22 @@ std::vector<std::vector<float>> generatePixelWiseRandomField(int m, int n, float
     return random_field;
 }
 
+std::vector<std::vector<float>> generateSineWaveField(int m, int n, float amplitude, float repetitions)
+{
+    std::vector<std::vector<float>> field(m, std::vector<float>(n));
+
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            field[i][j] = 0.5f * amplitude * sin(repetitions * 2 * M_PI * i / m);
+            field[i][j] += 0.5f * amplitude * sin(repetitions * 2 * M_PI * j / n);
+        }
+    }
+
+    return field;
+}
+
 template <typename T>
 inline T inverse_lerp(T a, T b, T x)
 {

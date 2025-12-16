@@ -7,7 +7,10 @@ void SceneImplicit::simulateStep()
     if (!is_running)
         return;
 
-    explicitStep(temp_field, delta_t);
+    // Test: heat source
+    //temp_field[7][7] += 100.0f;
+
+    implicitStep(temp_field, delta_t);
 }
 
 void SceneImplicit::onGUI()

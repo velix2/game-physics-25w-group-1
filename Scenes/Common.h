@@ -87,9 +87,11 @@ public:
     void setYDomainUpper(float value) { y_domain_upper = value; }
 };
 
+const glm::vec4 COLD_COLOR = glm::vec4(0, 0.1f, 0.9f, 1);
+const glm::vec4 WARM_COLOR = glm::vec4(1, 0.3f, 0.1f, 1);
+
 void explicitStep(TempField &temp_field, float delta_t);
 void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<float>> &updated_temp_field, int i, int j, float delta_t);
-
 
 /**
  * @brief Generates a 2D float vector initialized with random noise.
@@ -101,5 +103,10 @@ void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<f
  * @return std::vector<std::vector<float>> The initialized 2D vector.
  */
 std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val);
+
+template <typename T>
+T inverse_lerp(T a, T b, T x);
+
+glm::vec4 mapTemperatureToColor(float min, float max, float temp);
 
 #endif

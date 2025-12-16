@@ -34,9 +34,10 @@ void SceneExplicit::onDraw(Renderer &r)
         auto local_pos_center = glm::vec3(rendering_horizontal_scale * i * temp_field.deltaX(), 0, rendering_vertical_scale * temp_field[i][0]);
         auto local_pos_south = glm::vec3(rendering_horizontal_scale * (i - 1) * temp_field.deltaX(), 0, rendering_vertical_scale * temp_field[i - 1][0]);
 
-        r.drawSphere(corner_point + local_pos_center, 0.01);
+        r.drawSphere(corner_point + local_pos_center, 0.01, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z / rendering_vertical_scale));
+        auto line_south_temp = ((local_pos_center.z + local_pos_south.z) / rendering_vertical_scale) / 2.0f;
 
-        r.drawLine(corner_point + local_pos_center, corner_point + local_pos_south, glm::vec4(1));
+        r.drawLine(corner_point + local_pos_center, corner_point + local_pos_south, mapTemperatureToColor(min_temp, max_temp, line_south_temp));
     }
 
     // Base side y
@@ -45,9 +46,11 @@ void SceneExplicit::onDraw(Renderer &r)
         auto local_pos_center = glm::vec3(0, rendering_horizontal_scale * j * temp_field.deltaY(), rendering_vertical_scale * temp_field[0][j]);
         auto local_pos_west = glm::vec3(0, rendering_horizontal_scale * (j - 1) * temp_field.deltaY(), rendering_vertical_scale * temp_field[0][j - 1]);
 
-        r.drawSphere(corner_point + local_pos_center, 0.01);
+        r.drawSphere(corner_point + local_pos_center, 0.01, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
 
-        r.drawLine(corner_point + local_pos_center, corner_point + local_pos_west, glm::vec4(1));
+        auto line_west_temp = ((local_pos_center.z + local_pos_west.z) / rendering_vertical_scale) / 2.0f;
+
+        r.drawLine(corner_point + local_pos_center, corner_point + local_pos_west, mapTemperatureToColor(min_temp, max_temp, line_west_temp));
     }
 
     // "Inner" points
@@ -59,10 +62,13 @@ void SceneExplicit::onDraw(Renderer &r)
             auto local_pos_south = glm::vec3(rendering_horizontal_scale * (i - 1) * temp_field.deltaX(), rendering_horizontal_scale * j * temp_field.deltaY(), rendering_vertical_scale * temp_field[i - 1][j]);
             auto local_pos_west = glm::vec3(rendering_horizontal_scale * i * temp_field.deltaX(), rendering_horizontal_scale * (j - 1) * temp_field.deltaY(), rendering_vertical_scale * temp_field[i][j - 1]);
 
-            r.drawSphere(corner_point + local_pos_center, 0.01);
+            r.drawSphere(corner_point + local_pos_center, 0.01, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
 
-            r.drawLine(corner_point + local_pos_center, corner_point + local_pos_south, glm::vec4(1));
-            r.drawLine(corner_point + local_pos_center, corner_point + local_pos_west, glm::vec4(1));
+            auto line_west_temp = ((local_pos_center.z + local_pos_west.z) / rendering_vertical_scale) / 2.0f;
+            auto line_south_temp = ((local_pos_center.z + local_pos_south.z) / rendering_vertical_scale) / 2.0f;
+
+            r.drawLine(corner_point + local_pos_center, corner_point + local_pos_west, mapTemperatureToColor(min_temp, max_temp, line_west_temp));
+            r.drawLine(corner_point + local_pos_center, corner_point + local_pos_south, mapTemperatureToColor(min_temp, max_temp, line_south_temp));
         }
     }
 }

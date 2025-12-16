@@ -99,7 +99,8 @@ int TempField::getM()
 
 int TempField::getN()
 {
-    if (getM() == 0) return 0;
+    if (getM() == 0)
+        return 0;
     return this->temp_field[0].size();
 }
 
@@ -110,13 +111,13 @@ int TempField::totalSize()
 
 std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val)
 {
-    //Initialize the 2D vector
+    // Initialize the 2D vector
     std::vector<std::vector<float>> random_field(m, std::vector<float>(n));
 
     // Use the current time as seed
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::mt19937 generator(seed);
-    
+
     std::uniform_real_distribution<float> distribution(min_val, max_val);
 
     for (int i = 0; i < m; i++)
@@ -131,3 +132,19 @@ std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val,
     return random_field;
 }
 
+template <typename T>
+inline T inverse_lerp(T a, T b, T x)
+{
+    if (a == b)
+    {
+        return 0.0;
+    }
+
+    return std::clamp((x - a) / (b - a), 0.0f, 1.0f);
+}
+
+glm::vec4 mapTemperatureToColor(float min, float max, float temp)
+{
+    auto interpol = inverse_lerp(min, max, temp);
+    return glm::mix(COLD_COLOR, WARM_COLOR, interpol);
+}

@@ -1,7 +1,7 @@
 #include "Scene.h"
 #include "Common.h"
 
-class SceneExplicit : public Scene
+class SceneImplicit : public Scene
 {
     TempField temp_field = TempField(0.1f, generatePixelWiseRandomField(16, 16, -250.0f, 250.0f), 0, 1, 0, 1);
     float delta_t = 0.01;

@@ -110,7 +110,7 @@ void implicitStep(TempField &temp_field, float delta_t);
  * @param max_val The upper bound for the random float values (inclusive).
  * @return std::vector<std::vector<float>> The initialized 2D vector.
  */
-std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val);
+std::vector<std::vector<float>> generatePixelWiseRandomField(int m, int n, float min_val, float max_val);
 
 template <typename T>
 T inverse_lerp(T a, T b, T x);

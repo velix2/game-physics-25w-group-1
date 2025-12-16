@@ -196,7 +196,7 @@ int TempField::flattenedIndexFrom2DIndex(int i, int j)
     return i * getN() + j;
 }
 
-std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val)
+std::vector<std::vector<float>> generatePixelWiseRandomField(int m, int n, float min_val, float max_val)
 {
     // Initialize the 2D vector
     std::vector<std::vector<float>> random_field(m, std::vector<float>(n));

@@ -90,4 +90,16 @@ public:
 void explicitStep(TempField &temp_field, float delta_t);
 void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<float>> &updated_temp_field, int i, int j, float delta_t);
 
+
+/**
+ * @brief Generates a 2D float vector initialized with random noise.
+ *
+ * @param m Number of rows (y-dimension).
+ * @param n Number of columns (x-dimension).
+ * @param min_val The lower bound for the random float values (inclusive).
+ * @param max_val The upper bound for the random float values (inclusive).
+ * @return std::vector<std::vector<float>> The initialized 2D vector.
+ */
+std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val);
+
 #endif

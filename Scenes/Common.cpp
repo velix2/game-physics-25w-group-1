@@ -1,5 +1,8 @@
 #include "Common.h"
 
+#include <random>
+#include <chrono>
+
 void explicitStep(TempField &temp_field, float delta_t)
 {
     // New field
@@ -104,3 +107,27 @@ int TempField::totalSize()
 {
     return getN() * getM();
 }
+
+std::vector<std::vector<float>> generateRandomField(int m, int n, float min_val, float max_val)
+{
+    //Initialize the 2D vector
+    std::vector<std::vector<float>> random_field(m, std::vector<float>(n));
+
+    // Use the current time as seed
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 generator(seed);
+    
+    std::uniform_real_distribution<float> distribution(min_val, max_val);
+
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            // Generate a random float and assign it
+            random_field[i][j] = distribution(generator);
+        }
+    }
+
+    return random_field;
+}
+

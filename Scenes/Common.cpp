@@ -3,12 +3,12 @@
 void explicitStep(TempField &temp_field, float delta_t)
 {
     // New field
-    auto next_field = std::vector<std::vector<float>>(temp_field.getN(), std::vector<float>(temp_field.getM(), 0.0f));
+    auto next_field = std::vector<std::vector<float>>(temp_field.getM(), std::vector<float>(temp_field.getN(), 0.0f));
 
     // Iterate over entire field
-    for (int i = 0; i < temp_field.getN(); i++)
+    for (int i = 0; i < temp_field.getM(); i++)
     {
-        for (int j = 0; j < temp_field.getM(); j++)
+        for (int j = 0; j < temp_field.getN(); j++)
         {
             explicitStepHelper(temp_field, next_field, i, j, delta_t);
         }
@@ -21,16 +21,16 @@ void explicitStep(TempField &temp_field, float delta_t)
 void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<float>> &updated_temp_field, int i, int j, float delta_t)
 {
     // Check for boundary conditions
-    auto x_len = current_temp_field.getN();
-    auto y_len = current_temp_field.getM();
+    auto x_len = current_temp_field.getM();
+    auto y_len = current_temp_field.getN();
 
     float T_center = current_temp_field[i][j];
     float T_x_dir_prev, T_x_dir_next, T_y_dir_prev, T_y_dir_next;
 
     T_x_dir_prev = 0 < i ? current_temp_field[i - 1][j] : 0;
     T_x_dir_next = i < x_len - 1 ? current_temp_field[i + 1][j] : 0;
-    T_y_dir_prev = 0 < i ? current_temp_field[i][j - 1] : 0;
-    T_y_dir_next = i < y_len - 1 ? current_temp_field[i][j + 1] : 0;
+    T_y_dir_prev = 0 < j ? current_temp_field[i][j - 1] : 0;
+    T_y_dir_next = j < y_len - 1 ? current_temp_field[i][j + 1] : 0;
 
     auto delta_x = current_temp_field.deltaX();
     auto delta_y = current_temp_field.deltaY();
@@ -44,6 +44,16 @@ void explicitStepHelper(TempField &current_temp_field, std::vector<std::vector<f
     updated_temp_field[i][j] = new_temp;
 }
 
+TempField::TempField()
+    : thermal_diffusivity(0.1f),
+      temp_field(std::vector<std::vector<float>>(0, std::vector<float>(0, 0.0f))),
+      x_domain_lower(0.0f),
+      x_domain_upper(1.0f),
+      y_domain_lower(0.0f),
+      y_domain_upper(1.0f)
+{
+}
+
 TempField::TempField(float thermal_diffusivity, std::vector<std::vector<float>> initial_temp_field, float x_domain_lower, float x_domain_upper, float y_domain_lower, float y_domain_upper)
     : thermal_diffusivity(thermal_diffusivity),
       temp_field(std::move(initial_temp_field)),
@@ -54,9 +64,9 @@ TempField::TempField(float thermal_diffusivity, std::vector<std::vector<float>> 
 {
 }
 
-TempField::TempField(float thermal_diffusivity, int n, int m, float x_domain_lower, float x_domain_upper, float y_domain_lower, float y_domain_upper)
+TempField::TempField(float thermal_diffusivity, int m, int n, float x_domain_lower, float x_domain_upper, float y_domain_lower, float y_domain_upper)
     : thermal_diffusivity(thermal_diffusivity),
-      temp_field(std::vector<std::vector<float>>(n, std::vector<float>(m, 0.0f))),
+      temp_field(std::vector<std::vector<float>>(m, std::vector<float>(n, 0.0f))),
       x_domain_lower(x_domain_lower),
       x_domain_upper(x_domain_upper),
       y_domain_lower(y_domain_lower),
@@ -71,15 +81,26 @@ std::vector<float> &TempField::operator[](int i)
 
 float TempField::deltaX()
 {
-    return (x_domain_upper - x_domain_lower) / n;
+    return (x_domain_upper - x_domain_lower) / getN();
 }
 
 float TempField::deltaY()
 {
-    return (y_domain_upper - y_domain_lower) / m;
+    return (y_domain_upper - y_domain_lower) / getM();
+}
+
+int TempField::getM()
+{
+    return this->temp_field.size();
+}
+
+int TempField::getN()
+{
+    if (getM() == 0) return 0;
+    return this->temp_field[0].size();
 }
 
 int TempField::totalSize()
 {
-    return this->n * this->m;
+    return getN() * getM();
 }

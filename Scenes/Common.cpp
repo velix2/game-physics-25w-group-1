@@ -235,6 +235,29 @@ std::vector<std::vector<float>> generateSineWaveField(int m, int n, float amplit
     return field;
 }
 
+std::vector<std::vector<float>> generateGaussianField(int m, int n, float amplitude, float mean_x, float mean_y, float sigma)
+{
+    std::vector<std::vector<float>> field(m, std::vector<float>(n));
+
+    for (int i = 0; i < m; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            float x = static_cast<float>(i) / static_cast<float>(m - 1);
+            float y = static_cast<float>(j) / static_cast<float>(n - 1);
+
+            float exponent = -(
+                ((x - mean_x) * (x - mean_x)) / (2.0f * sigma * sigma) +
+                ((y - mean_y) * (y - mean_y)) / (2.0f * sigma * sigma)
+            );
+
+            field[i][j] = amplitude * std::exp(exponent);
+        }
+    }
+
+    return field;
+}
+
 template <typename T>
 inline T inverse_lerp(T a, T b, T x)
 {

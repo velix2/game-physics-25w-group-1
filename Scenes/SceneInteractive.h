@@ -19,7 +19,9 @@ class SceneInteractive : public Scene {
     // Sine Wave
     float sine_amplitude = 350.0f, sine_repetitions = 2.5f;
 
-    // TODO Gaussian
+    // Gaussian
+    float gaussian_mean_pos[2] = {0.5f, 0.5f};
+    float gaussian_amplitude = 250, gaussian_sigma = 0.2f;
 
     // Common
     int m = 16, n = 16;

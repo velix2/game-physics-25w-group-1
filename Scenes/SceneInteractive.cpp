@@ -43,6 +43,9 @@ void SceneInteractive::onGUI()
         ImGui::InputFloat("Waves", &sine_repetitions);
         break;
     case 2: // Gaussian
+        ImGui::InputFloat("Amplitude", &gaussian_amplitude);
+        ImGui::InputFloat("Sigma", &gaussian_sigma);
+        ImGui::InputFloat2("Mean Pos", gaussian_mean_pos);
         break;
     }
 
@@ -74,6 +77,7 @@ void SceneInteractive::onGUI()
             temp_field.setTempField(generateSineWaveField(m, n, sine_amplitude, sine_repetitions));
             break;
         case 2: // Gaussian
+            temp_field.setTempField(generateGaussianField(m, n, gaussian_amplitude, gaussian_mean_pos[0], gaussian_mean_pos[1], gaussian_sigma));
             break;
         }
     }

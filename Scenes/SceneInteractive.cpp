@@ -51,23 +51,19 @@ void SceneInteractive::onGUI()
     m = arr[0];
     n = arr[1];
 
-    float arr_domain_x[] = {x_domain_lower_bound, x_domain_upper_bound};
-    ImGui::InputFloat2("X-Domain", arr_domain_x);
-    x_domain_lower_bound = arr_domain_x[0];
-    x_domain_upper_bound = arr_domain_x[1];
+    ImGui::InputFloat("X-Domain Lower", &x_domain_lower_bound);
+    ImGui::InputFloat("X-Domain Upper", &x_domain_upper_bound);
 
-    float arr_domain_y[] = {y_domain_lower_bound, y_domain_upper_bound};
-    ImGui::InputFloat2("X-Domain", arr_domain_y);
-    y_domain_lower_bound = arr_domain_y[0];
-    y_domain_upper_bound = arr_domain_y[1];
+    ImGui::InputFloat("Y-Domain Lower", &y_domain_lower_bound);
+    ImGui::InputFloat("Y-Domain Upper", &y_domain_upper_bound);
 
     if (ImGui::Button("Reinstantate Field"))
     {
-            temp_field.setXDomainLower(x_domain_lower_bound);
-            temp_field.setXDomainUpper(x_domain_upper_bound);
+        temp_field.setXDomainLower(x_domain_lower_bound);
+        temp_field.setXDomainUpper(x_domain_upper_bound);
 
-            temp_field.setYDomainLower(y_domain_lower_bound);
-            temp_field.setYDomainUpper(y_domain_upper_bound);
+        temp_field.setYDomainLower(y_domain_lower_bound);
+        temp_field.setYDomainUpper(y_domain_upper_bound);
 
         switch (selected_method)
         {

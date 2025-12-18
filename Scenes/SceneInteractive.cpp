@@ -132,4 +132,45 @@ void SceneInteractive::onDraw(Renderer &r)
             r.drawLine(corner_point + local_pos_center, corner_point + local_pos_south, mapTemperatureToColor(min_temp, max_temp, line_south_temp));
         }
     }
+
+    // Ray casting
+    CalculateRay(r);
+
+    mouse_on_plane_pos = CalculateIntersectionWithOriginPlane();
+}
+
+void SceneInteractive::CalculateRay(Renderer &r)
+{
+    glm::vec2 window_size = glm::vec2(r.camera.width, r.camera.height);
+    ImVec2 mouse_pos = ImGui::GetMousePos();
+
+    glm::mat4 cameraViewMatrix = r.camera.viewMatrix;
+    glm::mat4 cameraProjMatrix = r.camera.projectionMatrix();
+
+    // Convert to NDC
+    float ndc_x = (2.0f * mouse_pos.x) / window_size.x - 1.0f;
+    float ndc_y = 1.0f - (2.0f * mouse_pos.y) / window_size.y;
+
+    glm::vec4 ray_start_ndc(ndc_x, ndc_y, -1.0f, 1.0f);
+    glm::vec4 ray_end_ndc(ndc_x, ndc_y, 1.0f, 1.0f);
+
+    // Transform to World Space
+    glm::mat4 inv_vp = glm::inverse(cameraProjMatrix * cameraViewMatrix);
+
+    glm::vec4 ray_start_world = inv_vp * ray_start_ndc;
+    ray_start_world /= ray_start_world.w;
+
+    glm::vec4 ray_end_world = inv_vp * ray_end_ndc;
+    ray_end_world /= ray_end_world.w;
+
+    ray_origin = glm::vec3(ray_start_world);
+    ray_direction = glm::normalize(glm::vec3(ray_end_world) - ray_origin);
+}
+
+glm::vec3 SceneInteractive::CalculateIntersectionWithOriginPlane()
+{
+    auto N = glm::vec3(0, 0, 1);
+    auto t = -(glm::dot(ray_origin, N)) / glm::dot(ray_direction, N);
+
+    return ray_origin + t * ray_direction;
 }

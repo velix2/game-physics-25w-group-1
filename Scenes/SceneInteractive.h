@@ -1,7 +1,8 @@
 #include "Scene.h"
 #include "Common.h"
 
-class SceneInteractive : public Scene {
+class SceneInteractive : public Scene
+{
     TempField temp_field = TempField(0.1f, generateSineWaveField(16, 16, 350.0f, 2.5f), 0, 1, 0, 1);
     float delta_t = 0.005;
     float rendering_horizontal_scale = 10.0f;
@@ -25,10 +26,17 @@ class SceneInteractive : public Scene {
 
     // Common
     int m = 16, n = 16;
-    float x_domain_lower_bound = 0, x_domain_upper_bound = 1; 
-    float y_domain_lower_bound = 0, y_domain_upper_bound = 1; 
+    float x_domain_lower_bound = 0, x_domain_upper_bound = 1;
+    float y_domain_lower_bound = 0, y_domain_upper_bound = 1;
+
+    // Ray cast stuff
+    glm::vec3 ray_origin, ray_direction;
+    glm::vec3 mouse_on_plane_pos;
 
     void simulateStep() override;
     void onGUI() override;
     void onDraw(Renderer &r) override;
+
+    void CalculateRay(Renderer &r);
+    glm::vec3 CalculateIntersectionWithOriginPlane();
 };

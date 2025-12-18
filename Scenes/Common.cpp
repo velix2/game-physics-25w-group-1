@@ -72,13 +72,17 @@ void implicitStep(TempField &temp_field, float delta_t)
     for (int i = 0; i < m; i++)
     {
         for (int j = 0; j < n; j++)
-        {     
+        {
             matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j), center_coeff);
 
-            if (i > 0)      matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i - 1, j), -C_x);
-            if (i < m - 1)  matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i + 1, j), -C_x);
-            if (j > 0)      matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j - 1), -C_y);
-            if (j < n - 1)  matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j + 1), -C_y);
+            if (i > 0)
+                matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i - 1, j), -C_x);
+            if (i < m - 1)
+                matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i + 1, j), -C_x);
+            if (j > 0)
+                matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j - 1), -C_y);
+            if (j < n - 1)
+                matrix.set_element(temp_field.flattenedIndexFrom2DIndex(i, j), temp_field.flattenedIndexFrom2DIndex(i, j + 1), -C_y);
         }
     }
 
@@ -88,9 +92,12 @@ void implicitStep(TempField &temp_field, float delta_t)
 
     bool success = solver.solve(matrix, T_cur, T_next, relative_residual, iterations, 2);
 
-    if (success) {
+    if (success)
+    {
         temp_field.applyFlattenedTemperatureField(std::move(T_next));
-    } else {
+    }
+    else
+    {
         fprintf(stderr, "PCG failed to converge in %d iterations\n", iterations);
     }
 }
@@ -196,6 +203,27 @@ int TempField::flattenedIndexFrom2DIndex(int i, int j)
     return i * getN() + j;
 }
 
+void TempField::getClosestGridCoordinatesToWorldPos(glm::vec3 pos, int grid_pos[2], float rendering_horizontal_scale)
+{
+    auto x_domain_bound_scaled = (x_domain_upper - x_domain_lower) * rendering_horizontal_scale / 2;
+    auto y_domain_bound_scaled = (y_domain_upper - y_domain_lower) * rendering_horizontal_scale / 2;
+
+    if (pos.x < -x_domain_bound_scaled)
+        pos.x = -x_domain_bound_scaled;
+    if (pos.x > x_domain_bound_scaled)
+        pos.x = x_domain_bound_scaled;
+    if (pos.y < -y_domain_bound_scaled)
+        pos.y = -y_domain_bound_scaled;
+    if (pos.y > y_domain_bound_scaled)
+        pos.y = y_domain_bound_scaled;
+
+    auto x_interpolated = inverse_lerp(-x_domain_bound_scaled, x_domain_bound_scaled, pos.x);
+    auto y_interpolated = inverse_lerp(-y_domain_bound_scaled, y_domain_bound_scaled, pos.y);
+
+    grid_pos[0] = static_cast<int>(std::round((getM() - 1) * x_interpolated));
+    grid_pos[1] = static_cast<int>(std::round((getN() - 1) * y_interpolated));
+}
+
 std::vector<std::vector<float>> generatePixelWiseRandomField(int m, int n, float min_val, float max_val)
 {
     // Initialize the 2D vector
@@ -248,8 +276,7 @@ std::vector<std::vector<float>> generateGaussianField(int m, int n, float amplit
 
             float exponent = -(
                 ((x - mean_x) * (x - mean_x)) / (2.0f * sigma * sigma) +
-                ((y - mean_y) * (y - mean_y)) / (2.0f * sigma * sigma)
-            );
+                ((y - mean_y) * (y - mean_y)) / (2.0f * sigma * sigma));
 
             field[i][j] = amplitude * std::exp(exponent);
         }

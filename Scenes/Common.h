@@ -76,6 +76,8 @@ public:
 
     int flattenedIndexFrom2DIndex(int i, int j);
 
+    void getClosestGridCoordinatesToWorldPos(glm::vec3 pos, int grid_pos[2], float rendering_horizontal_scale);
+
     // Getters
     const std::vector<std::vector<float>> &getTempField() const { return temp_field; }
     float getThermalDiffusivity() const { return thermal_diffusivity; }

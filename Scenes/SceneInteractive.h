@@ -11,6 +11,8 @@ class SceneInteractive : public Scene
     bool is_running = false;
     bool is_using_implicit = true;
 
+    float heat_interact_amount = 50;
+
     // Reinit values
     int selected_method = 1;
 
@@ -32,10 +34,13 @@ class SceneInteractive : public Scene
     // Ray cast stuff
     glm::vec3 ray_origin, ray_direction;
     glm::vec3 mouse_on_plane_pos;
+    int mouse_on_plane_pos_grid[2] = {0};
 
     void simulateStep() override;
     void onGUI() override;
     void onDraw(Renderer &r) override;
+
+    void ApplyHeat();
 
     void CalculateRay(Renderer &r);
     glm::vec3 CalculateIntersectionWithOriginPlane();

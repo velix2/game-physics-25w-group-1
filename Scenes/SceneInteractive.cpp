@@ -4,6 +4,9 @@
 
 void SceneInteractive::simulateStep()
 {
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+        ApplyHeat();
+
     if (!is_running)
         return;
 
@@ -26,7 +29,12 @@ void SceneInteractive::onGUI()
     ImGui::Checkbox("Simulation runnning", &is_running);
 
     // Re-initialization
-    static const char *items[] = {"Random Noise", "Waves", "Gaussian Blob"};
+    static const char *items[] = {"Random Noise", "Waves", "Gaussian"};
+
+    ImGui::Separator();
+
+    ImGui::Text("Right Click on grid to apply heat");
+    ImGui::InputFloat("Amount" , &heat_interact_amount);
 
     ImGui::Separator();
 
@@ -85,6 +93,7 @@ void SceneInteractive::onGUI()
 
 void SceneInteractive::onDraw(Renderer &r)
 {
+
     auto corner_point = glm::vec3(-0.5f * rendering_horizontal_scale * (temp_field.getXDomainUpper() - temp_field.getXDomainLower()),
                                   -0.5f * rendering_horizontal_scale * (temp_field.getYDomainUpper() - temp_field.getYDomainLower()),
                                   0);
@@ -137,6 +146,19 @@ void SceneInteractive::onDraw(Renderer &r)
     CalculateRay(r);
 
     mouse_on_plane_pos = CalculateIntersectionWithOriginPlane();
+
+    temp_field.getClosestGridCoordinatesToWorldPos(mouse_on_plane_pos, mouse_on_plane_pos_grid, rendering_horizontal_scale);
+
+    // Draw interact point
+    auto local_pos_center = glm::vec3(rendering_horizontal_scale * mouse_on_plane_pos_grid[0] * temp_field.deltaX(), rendering_horizontal_scale * mouse_on_plane_pos_grid[1] * temp_field.deltaY(), rendering_vertical_scale * temp_field[mouse_on_plane_pos_grid[0]][mouse_on_plane_pos_grid[1]]);
+    r.drawSphere(corner_point + local_pos_center, 0.4, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
+
+    r.drawSphere(mouse_on_plane_pos);
+}
+
+void SceneInteractive::ApplyHeat()
+{
+    temp_field[mouse_on_plane_pos_grid[0]][mouse_on_plane_pos_grid[1]] += heat_interact_amount;
 }
 
 void SceneInteractive::CalculateRay(Renderer &r)

@@ -151,9 +151,7 @@ void SceneInteractive::onDraw(Renderer &r)
 
     // Draw interact point
     auto local_pos_center = glm::vec3(rendering_horizontal_scale * mouse_on_plane_pos_grid[0] * temp_field.deltaX(), rendering_horizontal_scale * mouse_on_plane_pos_grid[1] * temp_field.deltaY(), rendering_vertical_scale * temp_field[mouse_on_plane_pos_grid[0]][mouse_on_plane_pos_grid[1]]);
-    r.drawSphere(corner_point + local_pos_center, 0.4, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
-
-    r.drawSphere(mouse_on_plane_pos);
+    r.drawSphere(corner_point + local_pos_center, 0.2, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
 }
 
 void SceneInteractive::ApplyHeat()

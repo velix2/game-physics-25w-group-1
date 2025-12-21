@@ -139,12 +139,12 @@ std::vector<float> &TempField::operator[](int i)
 
 float TempField::deltaX()
 {
-    return (x_domain_upper - x_domain_lower) / getN();
+    return (x_domain_upper - x_domain_lower) / getM();
 }
 
 float TempField::deltaY()
 {
-    return (y_domain_upper - y_domain_lower) / getM();
+    return (y_domain_upper - y_domain_lower) / getN();
 }
 
 int TempField::getM()

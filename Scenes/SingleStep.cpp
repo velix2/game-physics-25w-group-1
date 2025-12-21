@@ -1,77 +1,64 @@
 #include "SingleStep.h"
-#include <iostream>
+#include <imgui.h>
+#include <iomanip>
 
-void SingleStep::init() {
-    std::cout << "\n========================================" << std::endl;
-    std::cout << "SINGLE STEP RIGID BODY TEST" << std::endl;
-    std::cout << "========================================\n" << std::endl;
-    
-    // setup rigid body as specified:
-    // - center of mass at origin
-    // - extent: [1, 0.6, 0.5]
-    // - mass: 2
-    // - orientation: rotated 90 degrees around z axis
-    // - initial velocity: zero
-    // - initial angular velocity: zero
-    
-    body.position = glm::vec3(0, 0, 0);
-    body.extent = glm::vec3(1.0f, 0.6f, 0.5f);
-    body.mass = 2.0f;
-    body.orientation = glm::angleAxis(glm::radians(90.0f), glm::vec3(0, 0, 1));
-    body.velocity = glm::vec3(0);
-    body.angularVelocity = glm::vec3(0);
-    
-    body.print("initial state");
-    
-    // external force and application point
-    glm::vec3 force(1.0f, 1.0f, 0.0f);
-    glm::vec3 forcePos(0.3f, 0.5f, 0.25f);
-    float dt = 2.0f;
-    
-    std::cout << "\nforce: [" << force.x << ", " << force.y << ", " << force.z << "]" << std::endl;
-    std::cout << "force position (world): [" << forcePos.x << ", " << forcePos.y << ", " << forcePos.z << "]" << std::endl;
-    std::cout << "dt: " << dt << std::endl;
-    
-    // compute torque
-    glm::vec3 torque = body.computeTorque(force, forcePos);
-    std::cout << "\ntorque = r x F: [" << torque.x << ", " << torque.y << ", " << torque.z << "]" << std::endl;
-    
-    // print inertia tensor for debugging
-    glm::mat3 I = body.getBodyInertiaTensor();
-    std::cout << "\nbody inertia tensor (diagonal):" << std::endl;
-    std::cout << "  Ixx = " << I[0][0] << std::endl;
-    std::cout << "  Iyy = " << I[1][1] << std::endl;
-    std::cout << "  Izz = " << I[2][2] << std::endl;
-    
-    glm::mat3 I_world = body.getWorldInertiaTensor();
-    std::cout << "\nworld inertia tensor:" << std::endl;
-    std::cout << "  [" << I_world[0][0] << ", " << I_world[1][0] << ", " << I_world[2][0] << "]" << std::endl;
-    std::cout << "  [" << I_world[0][1] << ", " << I_world[1][1] << ", " << I_world[2][1] << "]" << std::endl;
-    std::cout << "  [" << I_world[0][2] << ", " << I_world[1][2] << ", " << I_world[2][2] << "]" << std::endl;
-    
-    // integrate one step
-    body.integrate(dt, force, torque);
-    
-    std::cout << "\n";
-    body.print("after one time step (dt=2)");
-    
-    // compute world space position and velocity of body-local point [-0.3, -0.5, -0.25]
-    glm::vec3 queryPoint(-0.3f, -0.5f, -0.25f);
-    glm::vec3 worldPos = body.getWorldPosition(queryPoint);
-    glm::vec3 pointVel = body.getPointVelocity(queryPoint);
-    
-    std::cout << "\nquery point (body local): [" << queryPoint.x << ", " << queryPoint.y << ", " << queryPoint.z << "]" << std::endl;
-    std::cout << "world position of query point: [" << worldPos.x << ", " << worldPos.y << ", " << worldPos.z << "]" << std::endl;
-    std::cout << "world velocity of query point: [" << pointVel.x << ", " << pointVel.y << ", " << pointVel.z << "]" << std::endl;
-    
-    std::cout << "\n========================================" << std::endl;
+void SingleStep::init()
+{
+    // initial temperature field from the exercise
+    // T[0] with i = 0..2 (rows), j = 0..5 (columns)
+    // i\j   0   1   2   3   4   5
+    // 0     6   5   1  -1  -2  -1
+    // 1     4   3   0  -1  -3  -1
+    // 2     3   2  -1  -2  -4  -2
+
+    T.resize(m * n);
+    // row i=0
+    T[0 * n + 0] = 6;  T[0 * n + 1] = 5;  T[0 * n + 2] = 1;
+    T[0 * n + 3] = -1; T[0 * n + 4] = -2; T[0 * n + 5] = -1;
+    // row i=1
+    T[1 * n + 0] = 4;  T[1 * n + 1] = 3;  T[1 * n + 2] = 0;
+    T[1 * n + 3] = -1; T[1 * n + 4] = -3; T[1 * n + 5] = -1;
+    // row i=2
+    T[2 * n + 0] = 3;  T[2 * n + 1] = 2;  T[2 * n + 2] = -1;
+    T[2 * n + 3] = -2; T[2 * n + 4] = -4; T[2 * n + 5] = -2;
+
+    // perform one explicit euler step
+    std::vector<float> T1 = explicitStep(T);
+
+    // print the requested values
+    std::cout << std::fixed << std::setprecision(6);
+    std::cout << "=== Single Step Explicit Euler Test ===" << std::endl;
+    std::cout << "Domain: " << domainWidth << " x " << domainHeight << std::endl;
+    std::cout << "Grid: " << m << " x " << n << " interior points" << std::endl;
+    std::cout << "dx = " << dx() << ", dy = " << dy() << std::endl;
+    std::cout << "nu = " << nu << ", dt = " << dt << std::endl;
+    std::cout << std::endl;
+    std::cout << "T[1]_{1,3} = " << T1[1 * n + 3] << std::endl;
+    std::cout << "T[1]_{0,3} = " << T1[0 * n + 3] << std::endl;
+    std::cout << "T[1]_{0,5} = " << T1[0 * n + 5] << std::endl;
+
+    // update T to the new state for visualization
+    T = T1;
 }
 
-void SingleStep::onDraw(Renderer& renderer) {
-    // draw world bounds
+void SingleStep::onDraw(Renderer& renderer)
+{
     renderer.drawWireCube(glm::vec3(0), glm::vec3(5), glm::vec3(1));
-    
-    // draw the rigid body
-    renderer.drawCube(body.position, body.orientation, body.extent, glm::vec4(0.8f, 0.2f, 0.2f, 1.0f));
+
+    // optionally visualize the grid as an image
+    if (!T.empty())
+    {
+        renderer.drawImage(T, m, n, Colormap("coolwarm"), {0.5f, 0.5f}, {0.4f, 0.4f});
+    }
+}
+
+void SingleStep::onGUI()
+{
+    ImGui::Text("Single Step Test - Explicit Euler");
+    ImGui::Text("Check terminal for output values");
+    ImGui::Separator();
+    ImGui::Text("Grid: %d x %d", m, n);
+    ImGui::Text("dx = %.4f, dy = %.4f", dx(), dy());
+    ImGui::Text("nu = %.4f, dt = %.4f", nu, dt);
 }
 

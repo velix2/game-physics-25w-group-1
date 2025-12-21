@@ -149,7 +149,10 @@ void SceneInteractive::onDraw(Renderer &r)
 
     temp_field.getClosestGridCoordinatesToWorldPos(mouse_on_plane_pos, mouse_on_plane_pos_grid, rendering_horizontal_scale);
 
-    // Draw interact point
+    // Draw interact point if valid
+    if (mouse_on_plane_pos_grid[0] < 0 || mouse_on_plane_pos_grid[0] >= temp_field.getM() || mouse_on_plane_pos_grid[1] < 0 || mouse_on_plane_pos_grid[1] >= temp_field.getN())
+        return;
+
     auto local_pos_center = glm::vec3(rendering_horizontal_scale * mouse_on_plane_pos_grid[0] * temp_field.deltaX(), rendering_horizontal_scale * mouse_on_plane_pos_grid[1] * temp_field.deltaY(), rendering_vertical_scale * temp_field[mouse_on_plane_pos_grid[0]][mouse_on_plane_pos_grid[1]]);
     r.drawSphere(corner_point + local_pos_center, 0.2, mapTemperatureToColor(min_temp, max_temp, local_pos_center.z));
 }

@@ -56,7 +56,6 @@ void implicitStep(TempField &temp_field, float delta_t)
     auto C_x = (temp_field.getThermalDiffusivity() * delta_t) / (deltaX * deltaX);
     auto C_y = (temp_field.getThermalDiffusivity() * delta_t) / (deltaY * deltaY);
 
-    // TODO validate
     auto center_coeff = 1 + 2 * C_x + 2 * C_y;
     auto up_coeff = -C_y;
     auto down_coeff = -C_y;

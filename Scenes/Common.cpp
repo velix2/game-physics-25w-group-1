@@ -213,9 +213,9 @@ bool Body::intersectRay(glm::vec3 origin, glm::vec3 direction, glm::vec3 &hitPoi
 
 void printMatrix(const glm::mat3 &mat)
 {
-    printf("| % 5.2f % 5.2f % 5.2f |\n", mat[0][0], mat[0][1], mat[0][2]);
-    printf("| % 5.2f % 5.2f % 5.2f |\n", mat[1][0], mat[1][1], mat[1][2]);
-    printf("| % 5.2f % 5.2f % 5.2f |\n", mat[2][0], mat[2][1], mat[2][2]);
+    printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][0], mat[1][0], mat[2][0]);
+    printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][1], mat[1][1], mat[2][1]);
+    printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][2], mat[1][2], mat[2][2]);
 }
 
 bool Body::doCollide(Body &rbb, float c)
@@ -291,14 +291,14 @@ void Body::print()
 {
     printf("================ Rigidbody state: ================\n");
     printf("Is fixed?               %s\n", this->fixed ? "yes" : "no");
-    printf("CM Position:            (%.2f, %.2f, %.2f)\n", this->cm.x, this->cm.y, this->cm.z);
-    printf("Velocity:               (%.2f, %.2f, %.2f)\n", this->linearVelocity.x, this->linearVelocity.y, this->linearVelocity.z);
-    printf("Mass:                   %.2f\n", this->mass);
-    printf("Rotation:               (%.2f, %.2f, %.2f, %.2f)\n", this->orientation.w, this->orientation.x, this->orientation.y, this->orientation.z);
+    printf("CM Position:            (%.3f, %.3f, %.3f)\n", this->cm.x, this->cm.y, this->cm.z);
+    printf("Velocity:               (%.3f, %.3f, %.3f)\n", this->linearVelocity.x, this->linearVelocity.y, this->linearVelocity.z);
+    printf("Mass:                   %.3f\n", this->mass);
+    printf("Rotation:               (%.3f, %.3f, %.3f, %.3f)\n", this->orientation.w, this->orientation.x, this->orientation.y, this->orientation.z);
     printf("Rotation Matrix:\n");
     printMatrix(glm::mat3_cast(this->orientation));
-    printf("Angular Momentum:       (%.2f, %.2f, %.2f)\n", this->angularMomentum.x, this->angularMomentum.y, this->angularMomentum.z);
-    printf("Angular Velocity:       (%.2f, %.2f, %.2f)\n", this->angularVelocity.x, this->angularVelocity.y, this->angularVelocity.z);
+    printf("Angular Momentum:       (%.3f, %.3f, %.3f)\n", this->angularMomentum.x, this->angularMomentum.y, this->angularMomentum.z);
+    printf("Angular Velocity:       (%.3f, %.3f, %.3f)\n", this->angularVelocity.x, this->angularVelocity.y, this->angularVelocity.z);
     printf("Current Inverted Inertia Tensor:\n");
     printMatrix(this->inertia);
     printf("Initial Inverted Inertia Tensor:\n");
@@ -309,10 +309,10 @@ void Body::print()
 void Body::printPoint(glm::vec3 pos)
 {
     printf("================== Point state: ==================\n");
-    printf("World Position:         (%.2f, %.2f, %.2f)\n", pos.x, pos.y, pos.z);
+    printf("World Position:         (%.3f, %.3f, %.3f)\n", pos.x, pos.y, pos.z);
     glm::vec3 localPos = glm::inverse(static_cast<glm::mat3>(this->orientation)) * (pos - this->cm);
-    printf("Local Position:         (%.2f, %.2f, %.2f)\n", localPos.x, localPos.y, localPos.z);
+    printf("Local Position:         (%.3f, %.3f, %.3f)\n", localPos.x, localPos.y, localPos.z);
     glm::vec3 velocity = this->linearVelocity + glm::cross(this->angularVelocity, localPos);
-    printf("Velocity:               (%.2f, %.2f, %.2f)\n", velocity.x, velocity.y, velocity.z);
+    printf("Velocity:               (%.3f, %.3f, %.3f)\n", velocity.x, velocity.y, velocity.z);
     printf("==================================================\n");
 }

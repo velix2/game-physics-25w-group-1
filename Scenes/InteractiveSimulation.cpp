@@ -190,9 +190,10 @@ void InteractiveSimulation::simulateStep()
 
 void InteractiveSimulation::onDraw(Renderer& renderer)
 {
+    // fixed range so 0 is neutral, negative is blue, positive is red
     if (!T.empty())
     {
-        renderer.drawImage(T, m, n, Colormap("coolwarm"), {0.0f, 0.0f}, {1.0f, 1.0f});
+        renderer.drawImage(T, m, n, -1.0f, 1.0f, Colormap("coolwarm"), {0.0f, 0.0f}, {1.0f, 1.0f});
     }
 }
 

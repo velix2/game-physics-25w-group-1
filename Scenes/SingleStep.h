@@ -23,8 +23,8 @@ class SingleStep : public Scene
     std::vector<float> T;
 
     // grid spacing
-    float dx() const { return domainWidth / (m + 1); }
-    float dy() const { return domainHeight / (n + 1); }
+    float dx() const { return domainWidth / (m); }
+    float dy() const { return domainHeight / (n); }
 
     // helper to get temperature at (i, j) with dirichlet bc (T=0 at boundaries)
     float getT(const std::vector<float>& grid, int i, int j) const

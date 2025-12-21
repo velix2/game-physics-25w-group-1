@@ -79,10 +79,10 @@ void ExplicitSimulation::simulateStep()
 
 void ExplicitSimulation::onDraw(Renderer& renderer)
 {
-    // visualize temperature field as heatmap
+    // visualize temperature field with fixed range so 0 is neutral color
     if (!T.empty())
     {
-        renderer.drawImage(T, m, n, Colormap("coolwarm"), {0.0f, 0.0f}, {1.0f, 1.0f});
+        renderer.drawImage(T, m, n, -1.0f, 1.0f, Colormap("coolwarm"), {0.0f, 0.0f}, {1.0f, 1.0f});
     }
 }
 

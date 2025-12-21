@@ -36,6 +36,22 @@ void SingleStep::init()
     std::cout << "T[1]_{1,3} = " << T1[1 * n + 3] << std::endl;
     std::cout << "T[1]_{0,3} = " << T1[0 * n + 3] << std::endl;
     std::cout << "T[1]_{0,5} = " << T1[0 * n + 5] << std::endl;
+    std::cout << std::endl;
+
+    // print full table after t=0.1
+    std::cout << "Full T[1] table (after dt=0.1):" << std::endl;
+    std::cout << "i\\j\t";
+    for (int j = 0; j < n; ++j)
+        std::cout << j << "\t\t";
+    std::cout << std::endl;
+
+    for (int i = 0; i < m; ++i)
+    {
+        std::cout << i << "\t";
+        for (int j = 0; j < n; ++j)
+            std::cout << T1[i * n + j] << "\t";
+        std::cout << std::endl;
+    }
 
     // update T to the new state for visualization
     T = T1;

@@ -262,7 +262,9 @@ bool Body::doCollide(Body &rbb, float c)
     }
     Body &rba = *this;
     // this is A, other is B
-    auto info = collisionTools::checkCollisionSAT(rba.getWorldFromObj(), rbb.getWorldFromObj());
+    auto rba_mat = rba.getWorldFromObj();
+    auto rbb_mat = rbb.getWorldFromObj();
+    auto info = collisionTools::checkCollisionSAT(rba_mat, rbb_mat);
     if (!info.isColliding)
     {
         return false;

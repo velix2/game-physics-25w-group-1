@@ -27,11 +27,12 @@ struct Body
     glm::vec3 linearVelocity;               // v
     float mass;                             // M
     float inverseMass;                      // M^-1
+    float damping;
 
     Body(glm::vec3 cm, glm::vec3 linearVelocity, glm::quat orientation, glm::vec3 angularMomentum, float mass, glm::vec3 extent, bool fixed)
         : fixed(fixed), cm(cm), offsets(compOffsets(extent)), extent(extent), force(glm::vec3(0)), torque(glm::vec3(0)), orientation(orientation),
           initialInertia(fixed ? glm::mat3(0) : compInitialInertia(extent, mass)), angularMomentum(angularMomentum), linearVelocity(linearVelocity), mass(mass),
-          inverseMass(fixed ? 0 : 1.0 / mass)
+          inverseMass(fixed ? 0 : 1.0 / mass), damping(0.005)
     {
         glm::mat3 rot = static_cast<glm::mat3>(this->orientation);
         this->inertia = rot * this->initialInertia * glm::transpose(rot);
@@ -51,4 +52,17 @@ struct Body
     bool doCollide(Body &other, float c);
     void print();
     void printPoint(glm::vec3 pos);
+};
+
+struct Spring
+{
+    Body *point1, *point2;
+    float restLength, stiffness;
+
+    Spring(Body &point1, Body &point2, float restLength, float stiffness) : point1(&point1), point2(&point2),
+                                                                            restLength(restLength), stiffness(stiffness) {};
+
+    Spring() {};
+
+    virtual void computeElasticForces(float dt, bool doDamping = false);
 };

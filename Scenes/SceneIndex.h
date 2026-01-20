@@ -1,7 +1,6 @@
 #include "Scene.h"
 #include <map>
 
-#include "SingleStep.h"
 #include "SingleBody.h"
 #include "Collision.h"
 #include "SceneComplex.h"
@@ -16,7 +15,6 @@ SceneCreator creator()
 }
 
 std::map<std::string, SceneCreator> scenesCreators = {
-    {"Single Step", creator<SingleStep>()},
     {"Simulation", creator<SingleBody>()},
     {"Collision", creator<Collision>()},
     {"Complex", creator<SceneComplex>()},

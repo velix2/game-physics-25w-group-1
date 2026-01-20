@@ -13,6 +13,7 @@ void Collision::simulateStep()
         // if (applyForce)
         // {
         // }
+        spring.computeElasticForces(dt);
         body1.integrate(dt);
         body2.integrate(dt);
         if (body1.doCollide(body2, c))

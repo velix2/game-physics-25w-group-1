@@ -8,6 +8,7 @@ class Collision : public Scene
 {
     Body body1 = Body(glm::vec3(0.5, 0, 0), glm::vec3(-0.5, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), 2, glm::vec3(0.5), false);
     Body body2 = Body(glm::vec3(-0.5, 0, 0), glm::vec3(0.5, 0, 0), glm::quat(glm::vec3(PI_4, PI_4, 0)), glm::vec3(0), 2, glm::vec3(0.5), false);
+    Spring spring = Spring(body1, body2, 1, 1);
 
     float dt = 0.01;
     float c = 0.5;

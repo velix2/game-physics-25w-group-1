@@ -60,6 +60,42 @@ std::array<glm::vec3, 8> compOffsets(glm::vec3 extent)
     return points;
 }
 
+void Spring::computeElasticForces(float dt, bool doDamping)
+{
+    glm::vec3 lVec = (point1->cm - point2->cm);
+    double l = sqrt(lVec.x * lVec.x + lVec.y * lVec.y + lVec.z * lVec.z);
+    // If two points have the same position, the computed force would be infinite.
+    // In this case, the assumed force is based on the velocities of the points, as if the points collided.
+    if (l == 0)
+    {
+        glm::vec3 vrel = point2->linearVelocity - point1->linearVelocity;
+        float normFactor = sqrt(dot(vrel, vrel));
+        if (normFactor == 0)
+        {
+            vrel = glm::vec3(0, 0, 1);
+            normFactor = 1;
+        }
+        glm::vec3 n = vrel / normFactor;
+        glm::vec3 f = 1000000 * 0.001f * n;
+        point1->force += f;
+        point2->force += -f;
+        return;
+    }
+    float scaleFactor = (-stiffness * (l - restLength)) / l;
+    glm::vec3 force = lVec * scaleFactor;
+
+    point1->force += force;
+    if (doDamping)
+    {
+        point1->force -= point1->damping * point1->linearVelocity;
+    }
+    point2->force += -force;
+    if (doDamping)
+    {
+        point2->force -= point2->damping * point2->linearVelocity;
+    }
+}
+
 glm::mat4 Body::getWorldFromObj()
 {
     glm::mat4 rotationMatrix = static_cast<glm::mat4>(this->orientation);

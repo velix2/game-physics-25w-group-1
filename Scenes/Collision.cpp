@@ -61,6 +61,12 @@ void Collision::onDraw(Renderer &renderer)
     // renderer.drawCube(body2.cm, body2.orientation, body2.extent, glm::vec4(1, 1, 1, 0.2));
     body1.draw(renderer);
     body2.draw(renderer);
+    auto cmap = Colormap("jet");
+    float dist = glm::length(spring.point1->cm - spring.point2->cm);
+    float colval = (dist + 3 * spring.restLength) / (6 * spring.restLength);
+    printf("%f\n", colval);
+    renderer.drawLine(spring.point1->cm, spring.point2->cm,
+                      glm::vec4(cmap(colval), 1.0));
     //  printf("%f", renderer.camera.near);
     projMatrix = renderer.camera.projectionMatrix();
     cameraMatrix = renderer.camera.viewMatrix;

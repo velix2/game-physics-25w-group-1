@@ -111,8 +111,8 @@ glm::vec3 Body::getLocalPos(glm::vec3 worldPos)
 
 glm::vec3 Body::getVelocityAt(glm::vec3 worldPos)
 {
-    return this->linearVelocity + glm::cross(this->angularVelocity, getLocalPos(worldPos)); // TODO check if only translation is enough
-    // return this->linearVelocity + glm::cross(this->angularVelocity, worldPos - this->cm); // TODO check if only translation is enough
+    // Use world-space offset from center of mass (not local-space position)
+    return this->linearVelocity + glm::cross(this->angularVelocity, worldPos - this->cm);
 }
 
 void Body::clearForce()
@@ -261,44 +261,67 @@ bool Body::doCollide(Body &rbb, float c)
         return false;
     }
     Body &rba = *this;
-    // this is A, other is B
+    
+    // Check collision BOTH ways (SAT only detects B's vertex hitting A's face)
     auto rba_mat = rba.getWorldFromObj();
     auto rbb_mat = rbb.getWorldFromObj();
-    auto info = collisionTools::checkCollisionSAT(rba_mat, rbb_mat);
-    if (!info.isColliding)
+    auto infoAB = collisionTools::checkCollisionSAT(rba_mat, rbb_mat);
+    auto infoBA = collisionTools::checkCollisionSAT(rbb_mat, rba_mat);
+    
+    bool isColliding = infoAB.isColliding || infoBA.isColliding;
+    if (!isColliding)
     {
         return false;
     }
-
-    auto n = info.normalWorld; // impulse from B to A
-    // Normal should be correct, may need to flip
-    glm::vec3 vrel = rba.getVelocityAt(info.collisionPointWorld) - rbb.getVelocityAt(info.collisionPointWorld);
-    // glm::vec3 vrel = rba.linearVelocity - rbb.linearVelocity;
-    if (glm::dot(vrel, n) > 0)
-    {
-        return false;
-    }
-    // FIRST: Determine correct normal direction using center-to-center
-    // Normal should point from B towards A (separation direction)
-    glm::vec3 centerDir = rba.cm - rbb.cm;
-    if (glm::dot(n, centerDir) < 0)
+    
+    // Use the collision info with greater depth (more reliable)
+    CollisionInfo& info = infoAB.isColliding ? 
+        (infoBA.isColliding ? (infoAB.depth > infoBA.depth ? infoAB : infoBA) : infoAB) 
+        : infoBA;
+    
+    // Normal direction: when we used infoBA, normal points from A to B, so flip it
+    glm::vec3 n = info.normalWorld;
+    if (&info == &infoBA)
     {
         n = -n; // Flip so n points from B to A
     }
-    // Position correction - strong to prevent sinking
-    if (info.depth > 0.001f)
+    
+    // Double-check normal direction using center-to-center
+    glm::vec3 centerDir = rba.cm - rbb.cm;
+    if (glm::dot(n, centerDir) < 0)
     {
-        float correction = info.depth * 0.8f; // 80% correction
-
-        // Only move dynamic bodies
-        if (rba.inverseMass > 0)
-            rba.cm += n * correction;
-        if (rbb.inverseMass > 0)
-            rbb.cm -= n * correction;
+        n = -n;
     }
+    
+    // Position correction to prevent sinking - more aggressive
+    if (info.depth > 0.0001f)
+    {
+        float totalInvMass = rba.inverseMass + rbb.inverseMass;
+        if (totalInvMass > 0)
+        {
+            // Correct 80% of penetration to prevent sinking
+            float correction = info.depth * 0.8f;
+            rba.cm += n * correction * (rba.inverseMass / totalInvMass);
+            rbb.cm -= n * correction * (rbb.inverseMass / totalInvMass);
+        }
+    }
+    
+    // Compute relative velocity at contact point
+    glm::vec3 vrel = rba.getVelocityAt(info.collisionPointWorld) - rbb.getVelocityAt(info.collisionPointWorld);
+    float vrelDotN = glm::dot(vrel, n);
+    
+    // If bodies are separating, no impulse needed
+    if (vrelDotN > 0)
+    {
+        return true; // Still colliding, but separating
+    }
+    
+    // Impulse calculation
     glm::vec3 xa = info.collisionPointWorld - rba.cm;
     glm::vec3 xb = info.collisionPointWorld - rbb.cm;
-    float numerator = -(1 + c) * glm::dot(vrel, n);
+    
+    float numerator = -(1 + c) * vrelDotN;
+    
     glm::vec3 parta = glm::vec3(0);
     if (!rba.fixed)
     {
@@ -309,17 +332,27 @@ bool Body::doCollide(Body &rbb, float c)
     {
         partb = glm::cross(rbb.inertia * glm::cross(xb, n), xb);
     }
+    
     float denominator = rba.inverseMass + rbb.inverseMass + glm::dot(parta + partb, n);
+    if (denominator < 1e-6f)
+    {
+        return true;
+    }
+    
     float j = numerator / denominator;
+    
+    // Apply impulse
     if (!rba.fixed)
     {
         rba.linearVelocity += (j * rba.inverseMass) * n;
         rba.angularMomentum += glm::cross(xa, j * n);
+        rba.angularVelocity = rba.inertia * rba.angularMomentum;
     }
     if (!rbb.fixed)
     {
         rbb.linearVelocity -= (j * rbb.inverseMass) * n;
         rbb.angularMomentum -= glm::cross(xb, j * n);
+        rbb.angularVelocity = rbb.inertia * rbb.angularMomentum;
     }
 
     return true;

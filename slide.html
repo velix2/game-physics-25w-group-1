@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Simulation: Wrecking Ball / Spring System</title>
+    <style>
+        @page {
+            size: 297mm 210mm; /* A4 Landscape */
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            width: 297mm;
+            height: 210mm;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .slide-container {
+            flex: 1;
+            padding: 20px 30px; /* Reduced padding */
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 20px; /* Reduced gap */
+            background: white;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        header {
+            grid-column: 1 / -1;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 10px;
+            margin-bottom: 0;
+            height: auto;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24pt; /* Reduced from 36pt */
+            color: #2c3e50;
+            line-height: 1.2;
+        }
+        h2 {
+            margin: 5px 0 0 0;
+            font-size: 14pt; /* Reduced from 18pt */
+            color: #7f8c8d;
+            font-weight: normal;
+        }
+        .column {
+            background: #ecf0f1;
+            border-radius: 10px;
+            padding: 15px; /* Reduced padding */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .column h3 {
+            color: #2980b9;
+            font-size: 16pt; /* Reduced from 20pt */
+            margin-top: 0;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        .content {
+            font-size: 11pt; /* Reduced from 14pt */
+            line-height: 1.4;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .formula {
+            background: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 4px solid #e74c3c;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #444;
+            font-size: 10pt;
+        }
+        .diagram {
+            height: 100px; /* Reduced height */
+            width: 100%;
+            background: white;
+            border-radius: 6px;
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #bdc3c7;
+        }
+        ul {
+            padding-left: 18px;
+            margin: 0;
+            flex: 1;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        p {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        strong {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <header>
+            <h1>Physics Simulation: The "Wrecking Ball" Mechanics</h1>
+            <h2>Understanding Rigid Bodies, Springs, and Collisions</h2>
+        </header>
+
+        <!-- Column 1: Rigid Body Physics -->
+        <div class="column">
+            <h3>1. Rigid Body Physics</h3>
+            <div class="content">
+                <p>The ball/cube are <strong>Rigid Bodies</strong>. They have mass, position, and orientation.</p>
+                <ul>
+                    <li><strong>Movement:</strong> We use <em>Semi-Implicit Euler Integration</em>. We update velocity first, then position.</li>
+                    <li><strong>Rotation:</strong> Orientation is stored as a <em>Quaternion</em> to avoid gimbal lock. Spinning is handled by the <em>Inertia Tensor</em> (how hard it is to rotate).</li>
+                </ul>
+                <div class="formula">
+                    v += (F / m) * dt<br>
+                    pos += v * dt
+                </div>
+            </div>
+            <div class="diagram">
+                <svg width="180" height="80" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+                    <rect x="80" y="30" width="40" height="40" fill="none" stroke="#2c3e50" stroke-width="2"/>
+                    <line x1="100" y1="50" x2="140" y2="50" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow)"/>
+                    <text x="145" y="55" font-family="sans-serif" font-size="14" fill="#e74c3c">Velocity</text>
+                    <circle cx="100" cy="50" r="3" fill="#2c3e50"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Column 2: The Spring Connection -->
+        <div class="column">
+            <h3>2. The Spring (Tether)</h3>
+            <div class="content">
+                <p>The bodies are connected by a <strong>Spring</strong>, acting as the "chain" of the wrecking ball.</p>
+                <ul>
+                    <li><strong>Hooke's Law:</strong> The force depends on how stretched the spring is.</li>
+                    <li><strong>Damping:</strong> We add friction to the spring so it doesn't oscillate forever.</li>
+                    <li>It pulls the bodies together, creating the swinging motion.</li>
+                </ul>
+                <div class="formula">
+                    F = -k * (dist - restLen)
+                </div>
+            </div>
+            <div class="diagram">
+                <svg width="180" height="80" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+                    <circle cx="50" cy="50" r="12" fill="#3498db"/>
+                    <circle cx="150" cy="50" r="12" fill="#3498db"/>
+                    <path d="M 62 50 Q 75 30, 90 50 T 115 50 T 138 50" fill="none" stroke="#2c3e50" stroke-width="2"/>
+                    <text x="75" y="85" font-family="sans-serif" font-size="14" fill="#2c3e50">Spring Force</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Column 3: Collision Resolution -->
+        <div class="column">
+            <h3>3. Collision Resolution</h3>
+            <div class="content">
+                <p>When the wrecking ball hits something:</p>
+                <ul>
+                    <li><strong>Detection:</strong> We use the <em>Separating Axis Theorem (SAT)</em> to find if shapes overlap.</li>
+                    <li><strong>Response:</strong> We apply an <strong>Impulse</strong> (instant change in velocity) to bounce them apart.</li>
+                    <li><strong>Bounciness:</strong> Controlled by the coefficient of restitution (<em>c</em>).</li>
+                </ul>
+                <div class="formula">
+                    J = -(1 + c) * (vRel . n) / ...
+                </div>
+            </div>
+            <div class="diagram">
+                <svg width="180" height="80" viewBox="0 0 200 100" preserveAspectRatio="xMidYMid meet">
+                    <rect x="60" y="30" width="40" height="40" fill="none" stroke="#2c3e50" stroke-width="2" transform="rotate(-15 80 50)"/>
+                    <rect x="100" y="30" width="40" height="40" fill="none" stroke="#e67e22" stroke-width="2" transform="rotate(15 120 50)"/>
+                    <path d="M 100 50 L 75 50" stroke="#e74c3c" stroke-width="3" marker-end="url(#arrow)"/>
+                    <text x="70" y="25" font-family="sans-serif" font-size="14" fill="#e74c3c">Impulse</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SVG Definitions for Arrows -->
+    <svg style="display: none;">
+        <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#e74c3c" />
+            </marker>
+        </defs>
+    </svg>
+</body>
+</html>

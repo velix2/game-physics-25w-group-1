@@ -6,17 +6,14 @@ void SceneComplex::init()
     // body.applyForceAt(glm::vec3(0.3, 0.5, 0.25), glm::vec3(1, 1, 0));
 }
 
-void SceneComplex::HandleCollision(Body &body, std::initializer_list<Body *> others)
+void SceneComplex::HandleCollision(Body &body)
 {
+    // Only check against static walls/floor
     body.doCollide(floor, c);
     body.doCollide(wallxp, c);
     body.doCollide(wallxn, c);
     body.doCollide(wallyp, c);
     body.doCollide(wallyn, c);
-    for (auto other : others)
-    {
-        body.doCollide(*other, c);
-    }
 }
 
 void SceneComplex::simulateStep()
@@ -27,17 +24,26 @@ void SceneComplex::simulateStep()
         // {
         // }
         body1.applyDirectForce(-body1.mass * ga);
-        body2.applyDirectForce(-body1.mass * ga);
-        body3.applyDirectForce(-body1.mass * ga);
-        body4.applyDirectForce(-body1.mass * ga);
+        body2.applyDirectForce(-body2.mass * ga);
+        body3.applyDirectForce(-body3.mass * ga);
+        body4.applyDirectForce(-body4.mass * ga);
         body1.integrate(dt);
         body2.integrate(dt);
         body3.integrate(dt);
         body4.integrate(dt);
-        HandleCollision(body1, {&body2, &body3, &body4});
-        HandleCollision(body2, {&body1, &body3, &body4});
-        HandleCollision(body3, {&body1, &body2, &body4});
-        HandleCollision(body4, {&body1, &body2, &body3});
+        // Handle collisions with walls/floor
+        HandleCollision(body1);
+        HandleCollision(body2);
+        HandleCollision(body3);
+        HandleCollision(body4);
+        
+        // Handle body-body collisions (each pair checked once)
+        body1.doCollide(body2, c);
+        body1.doCollide(body3, c);
+        body1.doCollide(body4, c);
+        body2.doCollide(body3, c);
+        body2.doCollide(body4, c);
+        body3.doCollide(body4, c);
         oneStep = false;
     }
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -75,9 +81,14 @@ void SceneComplex::onDraw(Renderer &renderer)
     renderer.drawLine(glm::vec3(0), glm::vec3(1, 0, 0), glm::vec4(1, 0, 0, 1));
     renderer.drawLine(glm::vec3(0), glm::vec3(0, 1, 0), glm::vec4(0, 1, 0, 1));
     renderer.drawLine(glm::vec3(0), glm::vec3(0, 0, 1), glm::vec4(0, 0, 1, 1));
-    // renderer.drawCube(body1.cm, body1.orientation, body1.extent, glm::vec4(1, 1, 1, 0.2));
-    // renderer.drawCube(body2.cm, body2.orientation, body2.extent, glm::vec4(1, 1, 1, 0.2));
-    // floor.draw(renderer);
+    // Draw floor and walls
+    renderer.drawCube(floor.cm, floor.orientation, floor.extent, glm::vec4(0.4, 0.4, 0.4, 1));
+    renderer.drawCube(wallxp.cm, wallxp.orientation, wallxp.extent, glm::vec4(0.3, 0.3, 0.35, 1));
+    renderer.drawCube(wallxn.cm, wallxn.orientation, wallxn.extent, glm::vec4(0.3, 0.3, 0.35, 1));
+    renderer.drawCube(wallyp.cm, wallyp.orientation, wallyp.extent, glm::vec4(0.3, 0.35, 0.3, 1));
+    renderer.drawCube(wallyn.cm, wallyn.orientation, wallyn.extent, glm::vec4(0.3, 0.35, 0.3, 1));
+    
+    // Draw dynamic bodies
     body1.draw(renderer);
     body2.draw(renderer);
     body3.draw(renderer);

@@ -1,17 +1,17 @@
 #include "Scene.h"
 #include "Common.h"
-#include <initializer_list>
 
 #define PI_2 glm::pi<float>() / 2.0f
 #define PI_4 glm::pi<float>() / 4.0f
 
 class SceneComplex : public Scene
 {
-    Body floor = Body(glm::vec3(0.0, 0.0, -1), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(1), true);
-    Body wallxp = Body(glm::vec3(1, 0.0, 0), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(1), true);
-    Body wallxn = Body(glm::vec3(-1, 0.0, 0), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(1), true);
-    Body wallyp = Body(glm::vec3(0, 1, 0), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(1), true);
-    Body wallyn = Body(glm::vec3(0, -1, 0), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(1), true);
+    // Large floor and walls to contain the bodies
+    Body floor = Body(glm::vec3(0.0, 0.0, -0.6), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(4, 4, 0.2), true);
+    Body wallxp = Body(glm::vec3(2.1, 0.0, 0.5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(0.2, 4, 2), true);
+    Body wallxn = Body(glm::vec3(-2.1, 0.0, 0.5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(0.2, 4, 2), true);
+    Body wallyp = Body(glm::vec3(0, 2.1, 0.5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(4, 0.2, 2), true);
+    Body wallyn = Body(glm::vec3(0, -2.1, 0.5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(4, 0.2, 2), true);
     Body body1 = Body(glm::vec3(0.25, 0, 0), glm::vec3(-0.5, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), 2, glm::vec3(0.1), false);
     Body body2 = Body(glm::vec3(-0.25, 0, 0), glm::vec3(0.5, 0, 0), glm::quat(glm::vec3(PI_4, PI_4, 0)), glm::vec3(0), 2, glm::vec3(0.1), false);
     Body body3 = Body(glm::vec3(0, 0.25, 0), glm::vec3(0, -0.5, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), 2, glm::vec3(0.1), false);
@@ -35,7 +35,7 @@ class SceneComplex : public Scene
     glm::vec3 right = glm::vec3(0, 1, 0);
     glm::vec3 up = glm::vec3(0, 0, 1);
 
-    void HandleCollision(Body &body, std::initializer_list<Body *> others);
+    void HandleCollision(Body &body);
     virtual void init() override;
     /// This is where you should update the physics of the scene.
     virtual void simulateStep() override;

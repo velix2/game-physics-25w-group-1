@@ -14,6 +14,7 @@ class Complex : public Scene
 
     float dt = 0.01;
     float c = 0.5;
+    float gravity = -9.81;
     bool paused = true;
     bool oneStep = false;
     bool applyForce = true;

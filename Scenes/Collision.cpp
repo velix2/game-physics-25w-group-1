@@ -64,7 +64,7 @@ void Collision::onDraw(Renderer &renderer)
     auto cmap = Colormap("jet");
     float dist = glm::length(spring.point1->cm - spring.point2->cm);
     float colval = (dist + 3 * spring.restLength) / (6 * spring.restLength);
-    printf("%f\n", colval);
+    //printf("%f\n", colval);
     renderer.drawLine(spring.point1->cm, spring.point2->cm,
                       glm::vec4(cmap(colval), 1.0));
     //  printf("%f", renderer.camera.near);

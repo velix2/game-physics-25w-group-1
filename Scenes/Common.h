@@ -15,12 +15,12 @@ struct Body
 {
     bool fixed;
     glm::vec3 cm;
-    const glm::vec3 extent;
-    const std::array<glm::vec3, 8> offsets; // x_i
+    glm::vec3 extent;
+    std::array<glm::vec3, 8> offsets; // x_i
     glm::vec3 force;                        // F
     glm::vec3 torque;                       // q
     glm::quat orientation;                  // r
-    const glm::mat3 initialInertia;         // I_0^-1
+    glm::mat3 initialInertia;         // I_0^-1
     glm::mat3 inertia;                      // I^-1
     glm::vec3 angularMomentum;              // L
     glm::vec3 angularVelocity;              // w
@@ -28,6 +28,8 @@ struct Body
     float mass;                             // M
     float inverseMass;                      // M^-1
     float damping;
+
+    Body(){}
 
     Body(glm::vec3 cm, glm::vec3 linearVelocity, glm::quat orientation, glm::vec3 angularMomentum, float mass, glm::vec3 extent, bool fixed)
         : fixed(fixed), cm(cm), offsets(compOffsets(extent)), extent(extent), force(glm::vec3(0)), torque(glm::vec3(0)), orientation(orientation),

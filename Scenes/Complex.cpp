@@ -43,17 +43,7 @@ int ConnectXxYxZBlocks(std::vector<Spring> &springs, std::vector<Body> &bodies, 
 
 void Complex::init()
 {
-    // for (size_t i = 0; i < NUM_SPRINGS + 1; i++)
-    // {
-    //     bodies[i] = Body(glm::vec3(0, 0, i * .75), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), 2, glm::vec3(0.5), false);
-    // }
-
-    // for (size_t i = NUM_SPRINGS + 1; i < NUM_BODIES; i++)
-    // {
-    //     bodies[i] = Body(glm::vec3(5, 5, 5 + i * .75), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), 2, glm::vec3(0.5), false);
-    // }
-
-    SummonXxYxZBlocks(bodies, glm::vec3(0), glm::vec3(1), glm::vec3(1.25), 5, 5, 5, 2);
+    SummonXxYxZBlocks(bodies, glm::vec3(0), glm::vec3(1), glm::vec3(1.25), 3,3,8, 10);
 
     // Floor
     auto floor = Body(glm::vec3(0,0,-5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50,50,1), true);
@@ -62,11 +52,7 @@ void Complex::init()
     // ALWAYS init springs after bodies cuz of them pointers
     // Not great i know but its fine for now i guess
 
-    // for (size_t i = 0; i < NUM_SPRINGS; i++)
-    // {
-    //     springs[i] = Spring(bodies[i], bodies[i + 1], 1, 1);
-    // }
-    ConnectXxYxZBlocks(springs, bodies, 0, 5, 5, 5, 1.25, 4);
+    ConnectXxYxZBlocks(springs, bodies, 0, 3,3,8, 1.25, 10);
 }
 
 void Complex::simulateStep()
@@ -154,7 +140,6 @@ void Complex::onDraw(Renderer &renderer)
 void Complex::onGUI()
 {
     ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
-    ImGui::SliderFloat("Bouncyness", &c, 0, 1);
     ImGui::Checkbox("Paused", &paused);
     auto btnOneStep = ImGui::Button("Step");
     if (btnOneStep)

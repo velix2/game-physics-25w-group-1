@@ -253,106 +253,163 @@ void printMatrix(const glm::mat3 &mat)
     printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][1], mat[1][1], mat[2][1]);
     printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][2], mat[1][2], mat[2][2]);
 }
-
 bool Body::doCollide(Body &rbb, float c)
 {
     if (this->fixed && rbb.fixed)
-    {
         return false;
-    }
     Body &rba = *this;
-    
-    // Check collision BOTH ways (SAT only detects B's vertex hitting A's face)
-    auto rba_mat = rba.getWorldFromObj();
-    auto rbb_mat = rbb.getWorldFromObj();
-    auto infoAB = collisionTools::checkCollisionSAT(rba_mat, rbb_mat);
-    auto infoBA = collisionTools::checkCollisionSAT(rbb_mat, rba_mat);
-    
-    bool isColliding = infoAB.isColliding || infoBA.isColliding;
-    if (!isColliding)
-    {
+
+    auto rbaMat = rba.getWorldFromObj();
+    auto rbbMat = rbb.getWorldFromObj();
+
+    // 1. Broad / Narrow phase (SAT)
+    auto infoAB = collisionTools::checkCollisionSAT(rbaMat, rbbMat);
+    auto infoBA = collisionTools::checkCollisionSAT(rbbMat, rbaMat);
+
+    if (!infoAB.isColliding && !infoBA.isColliding)
         return false;
-    }
-    
-    // Use the collision info with greater depth (more reliable)
-    CollisionInfo& info = infoAB.isColliding ? 
-        (infoBA.isColliding ? (infoAB.depth > infoBA.depth ? infoAB : infoBA) : infoAB) 
-        : infoBA;
-    
-    // Normal direction: when we used infoBA, normal points from A to B, so flip it
+
+    CollisionInfo info = infoAB.isColliding ? (infoBA.isColliding ? (infoAB.depth > infoBA.depth ? infoAB : infoBA) : infoAB) : infoBA;
+
     glm::vec3 n = info.normalWorld;
-    if (&info == &infoBA)
-    {
-        n = -n; // Flip so n points from B to A
-    }
-    
-    // Double-check normal direction using center-to-center
-    glm::vec3 centerDir = rba.cm - rbb.cm;
-    if (glm::dot(n, centerDir) < 0)
-    {
+    if (glm::dot(n, rbb.cm - rba.cm) < 0)
         n = -n;
-    }
-    
-    // Position correction to prevent sinking - more aggressive
-    if (info.depth > 0.0001f)
+
+    // 2. Generate Manifold (Clipping)
+    std::vector<glm::vec3> faceA, faceB;
+    getBestFace(rba, n, faceA);
+    getBestFace(rbb, -n, faceB);
+
+    std::vector<glm::vec3> contactPoly = faceB;
+    glm::vec3 centerA = (faceA[0] + faceA[1] + faceA[2] + faceA[3]) * 0.25f;
+
+    for (int i = 0; i < 4; i++)
     {
-        float totalInvMass = rba.inverseMass + rbb.inverseMass;
-        if (totalInvMass > 0)
+        glm::vec3 p1 = faceA[i];
+        glm::vec3 p2 = faceA[(i + 1) % 4];
+        glm::vec3 sideNormal = glm::normalize(glm::cross(p2 - p1, n));
+        if (glm::dot(sideNormal, centerA - p1) < 0)
+            sideNormal = -sideNormal;
+
+        contactPoly = clip(contactPoly, p1, sideNormal);
+        if (contactPoly.empty())
+            break;
+    }
+
+    std::vector<glm::vec3> manifolds;
+    float maxDepth = 0.0f;
+    for (const auto &p : contactPoly)
+    {
+        float d = glm::dot(p - centerA, -n);
+        if (d >= -0.01f)
         {
-            // Correct 80% of penetration to prevent sinking
-            float correction = info.depth * 0.8f;
-            rba.cm += n * correction * (rba.inverseMass / totalInvMass);
-            rbb.cm -= n * correction * (rbb.inverseMass / totalInvMass);
+            manifolds.push_back(p);
+            if (d > maxDepth)
+                maxDepth = d;
         }
     }
-    
-    // Compute relative velocity at contact point
-    glm::vec3 vrel = rba.getVelocityAt(info.collisionPointWorld) - rbb.getVelocityAt(info.collisionPointWorld);
-    float vrelDotN = glm::dot(vrel, n);
-    
-    // If bodies are separating, no impulse needed
-    if (vrelDotN > 0)
+
+    if (manifolds.empty())
     {
-        return true; // Still colliding, but separating
+        manifolds.push_back(info.collisionPointWorld);
+        maxDepth = info.depth;
     }
-    
-    // Impulse calculation
-    glm::vec3 xa = info.collisionPointWorld - rba.cm;
-    glm::vec3 xb = info.collisionPointWorld - rbb.cm;
-    
-    float numerator = -(1 + c) * vrelDotN;
-    
-    glm::vec3 parta = glm::vec3(0);
-    if (!rba.fixed)
+
+    // 3. Position Correction
+    if (maxDepth > 0.001f)
     {
-        parta = glm::cross(rba.inertia * glm::cross(xa, n), xa);
+        float totalInvMass = rba.inverseMass + rbb.inverseMass;
+        float percent = 0.8f;
+        glm::vec3 correctionVec = n * (maxDepth * percent / totalInvMass);
+        if (!rba.fixed)
+            rba.cm -= correctionVec * rba.inverseMass;
+        if (!rbb.fixed)
+            rbb.cm += correctionVec * rbb.inverseMass;
     }
-    glm::vec3 partb = glm::vec3(0);
-    if (!rbb.fixed)
+
+    // 4. Apply Impulses Iteratively (Normal + Friction)
+    int iterations = 8;
+    float friction = 0.4f; // 0.0 = ice, 1.0 = rubber
+
+    for (int k = 0; k < iterations; k++)
     {
-        partb = glm::cross(rbb.inertia * glm::cross(xb, n), xb);
-    }
-    
-    float denominator = rba.inverseMass + rbb.inverseMass + glm::dot(parta + partb, n);
-    if (denominator < 1e-6f)
-    {
-        return true;
-    }
-    
-    float j = numerator / denominator;
-    
-    // Apply impulse
-    if (!rba.fixed)
-    {
-        rba.linearVelocity += (j * rba.inverseMass) * n;
-        rba.angularMomentum += glm::cross(xa, j * n);
-        rba.angularVelocity = rba.inertia * rba.angularMomentum;
-    }
-    if (!rbb.fixed)
-    {
-        rbb.linearVelocity -= (j * rbb.inverseMass) * n;
-        rbb.angularMomentum -= glm::cross(xb, j * n);
-        rbb.angularVelocity = rbb.inertia * rbb.angularMomentum;
+        for (const auto &p : manifolds)
+        {
+            glm::vec3 r1 = p - rba.cm;
+            glm::vec3 r2 = p - rbb.cm;
+
+            // --- NORMAL IMPULSE ---
+            glm::vec3 v1 = rba.linearVelocity + glm::cross(rba.angularVelocity, r1);
+            glm::vec3 v2 = rbb.linearVelocity + glm::cross(rbb.angularVelocity, r2);
+            glm::vec3 vrel = v2 - v1;
+
+            float vn = glm::dot(vrel, n);
+            if (vn > 0.0f)
+                continue;
+
+            glm::vec3 t1 = glm::cross(rba.inertia * glm::cross(r1, n), r1);
+            glm::vec3 t2 = glm::cross(rbb.inertia * glm::cross(r2, n), r2);
+
+            float denom = rba.inverseMass + rbb.inverseMass + glm::dot(t1 + t2, n);
+            float j = -(1.0f + c) * vn / denom;
+
+            glm::vec3 impulse = n * j;
+
+            if (!rba.fixed)
+            {
+                rba.linearVelocity -= impulse * rba.inverseMass;
+                rba.angularMomentum -= glm::cross(r1, impulse);
+                rba.angularVelocity = rba.inertia * rba.angularMomentum;
+            }
+            if (!rbb.fixed)
+            {
+                rbb.linearVelocity += impulse * rbb.inverseMass;
+                rbb.angularMomentum += glm::cross(r2, impulse);
+                rbb.angularVelocity = rbb.inertia * rbb.angularMomentum;
+            }
+
+            // --- FRICTION IMPULSE ---
+            // Re-calculate relative velocity because Normal impulse changed it
+            v1 = rba.linearVelocity + glm::cross(rba.angularVelocity, r1);
+            v2 = rbb.linearVelocity + glm::cross(rbb.angularVelocity, r2);
+            vrel = v2 - v1;
+
+            // Get tangent direction (velocity along the surface)
+            glm::vec3 tangent = vrel - n * glm::dot(vrel, n);
+            float tangentLen = glm::length(tangent);
+
+            if (tangentLen > 0.0001f)
+            {
+                tangent /= tangentLen; // Normalize
+
+                // Solve for tangent impulse magnitude
+                glm::vec3 ft1 = glm::cross(rba.inertia * glm::cross(r1, tangent), r1);
+                glm::vec3 ft2 = glm::cross(rbb.inertia * glm::cross(r2, tangent), r2);
+                float fDenom = rba.inverseMass + rbb.inverseMass + glm::dot(ft1 + ft2, tangent);
+
+                float jt = -glm::dot(vrel, tangent) / fDenom;
+
+                // Coulomb Friction Clamp:
+                // Friction force cannot exceed (Friction Coeff * Normal Force)
+                float maxJt = friction * j;
+                jt = glm::clamp(jt, -maxJt, maxJt);
+
+                glm::vec3 frictionImpulse = tangent * jt;
+
+                if (!rba.fixed)
+                {
+                    rba.linearVelocity -= frictionImpulse * rba.inverseMass;
+                    rba.angularMomentum -= glm::cross(r1, frictionImpulse);
+                    rba.angularVelocity = rba.inertia * rba.angularMomentum;
+                }
+                if (!rbb.fixed)
+                {
+                    rbb.linearVelocity += frictionImpulse * rbb.inverseMass;
+                    rbb.angularMomentum += glm::cross(r2, frictionImpulse);
+                    rbb.angularVelocity = rbb.inertia * rbb.angularMomentum;
+                }
+            }
+        }
     }
 
     return true;
@@ -386,4 +443,81 @@ void Body::printPoint(glm::vec3 pos)
     glm::vec3 velocity = this->linearVelocity + glm::cross(this->angularVelocity, localPos);
     printf("Velocity:               (%.3f, %.3f, %.3f)\n", velocity.x, velocity.y, velocity.z);
     printf("==================================================\n");
+}
+
+// Collision helpers
+
+// Helper: Clip polygon against a plane
+std::vector<glm::vec3> clip(const std::vector<glm::vec3> &vertices, glm::vec3 planePos, glm::vec3 planeNormal)
+{
+    std::vector<glm::vec3> result;
+    if (vertices.empty())
+        return result;
+
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        size_t next = (i + 1) % vertices.size();
+        glm::vec3 v1 = vertices[i];
+        glm::vec3 v2 = vertices[next];
+
+        float d1 = glm::dot(v1 - planePos, planeNormal);
+        float d2 = glm::dot(v2 - planePos, planeNormal);
+
+        if (d1 >= 0)
+            result.push_back(v1); // Keep points inside/on plane
+
+        if ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0))
+        {
+            float t = d1 / (d1 - d2);
+            result.push_back(v1 + t * (v2 - v1));
+        }
+    }
+    return result;
+}
+
+// Helper: Get face most perpendicular to normal
+void getBestFace(Body &body, glm::vec3 normal, std::vector<glm::vec3> &outVertices)
+{
+    glm::mat3 rot = static_cast<glm::mat3>(body.orientation);
+    glm::vec3 localNormal = glm::transpose(rot) * normal;
+
+    glm::vec3 absN = glm::abs(localNormal);
+    int axis = 0;
+    if (absN.y > absN.x)
+        axis = 1;
+    if (absN.z > absN[axis])
+        axis = 2;
+
+    glm::vec3 c = body.extent * 0.5f;
+    glm::vec3 v[4];
+
+    // Build the face in local space based on the dominant axis
+    if (axis == 0)
+    {
+        float sign = (localNormal.x > 0) ? 1.0f : -1.0f;
+        v[0] = glm::vec3(c.x * sign, c.y, c.z);
+        v[1] = glm::vec3(c.x * sign, -c.y, c.z);
+        v[2] = glm::vec3(c.x * sign, -c.y, -c.z);
+        v[3] = glm::vec3(c.x * sign, c.y, -c.z);
+    }
+    else if (axis == 1)
+    {
+        float sign = (localNormal.y > 0) ? 1.0f : -1.0f;
+        v[0] = glm::vec3(c.x, c.y * sign, c.z);
+        v[1] = glm::vec3(c.x, c.y * sign, -c.z);
+        v[2] = glm::vec3(-c.x, c.y * sign, -c.z);
+        v[3] = glm::vec3(-c.x, c.y * sign, c.z);
+    }
+    else
+    {
+        float sign = (localNormal.z > 0) ? 1.0f : -1.0f;
+        v[0] = glm::vec3(c.x, c.y, c.z * sign);
+        v[1] = glm::vec3(-c.x, c.y, c.z * sign);
+        v[2] = glm::vec3(-c.x, -c.y, c.z * sign);
+        v[3] = glm::vec3(c.x, -c.y, c.z * sign);
+    }
+
+    // Transform to world space
+    for (int i = 0; i < 4; i++)
+        outVertices.push_back(body.cm + rot * v[i]);
 }

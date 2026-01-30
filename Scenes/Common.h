@@ -1,6 +1,8 @@
 #include "Renderer.h"
 #include "util/CollisionDetection.h"
 #include <array>
+#include <vector>
+#include <algorithm>
 #pragma once
 
 glm::vec3 screenToWorldRay(
@@ -68,3 +70,14 @@ struct Spring
 
     virtual void computeElasticForces(float dt, bool doDamping = false);
 };
+
+// Collision Helpers
+
+// Structure to hold manifold contact points
+struct ContactPoint {
+    glm::vec3 position;
+    float depth;
+};
+void getBestFace(Body& body, glm::vec3 normal, std::vector<glm::vec3>& outVertices);
+
+std::vector<glm::vec3> clip(const std::vector<glm::vec3>& vertices, glm::vec3 planePos, glm::vec3 planeNormal);

@@ -13,7 +13,7 @@ class Complex : public Scene
     std::vector<Spring> springs = std::vector<Spring>();
 
     float dt = 0.01;
-    float c = 0.5;
+    const float c = 0;
     float gravity = -9.81;
     bool paused = true;
     bool oneStep = false;

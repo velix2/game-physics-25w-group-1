@@ -16,7 +16,7 @@ void Collision::simulateStep()
         spring.computeElasticForces(dt);
         body1.integrate(dt);
         body2.integrate(dt);
-        if (body1.doCollide(body2, c))
+        if (body1.doCollide(body2, c, friction))
         {
             printf("collided!\n");
         }

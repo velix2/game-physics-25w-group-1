@@ -253,7 +253,7 @@ void printMatrix(const glm::mat3 &mat)
     printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][1], mat[1][1], mat[2][1]);
     printf("| % 5.3f % 5.3f % 5.3f |\n", mat[0][2], mat[1][2], mat[2][2]);
 }
-bool Body::doCollide(Body &rbb, float c)
+bool Body::doCollide(Body &rbb, float c, float friction)
 {
     if (this->fixed && rbb.fixed)
         return false;
@@ -262,7 +262,7 @@ bool Body::doCollide(Body &rbb, float c)
     auto rbaMat = rba.getWorldFromObj();
     auto rbbMat = rbb.getWorldFromObj();
 
-    // 1. Broad / Narrow phase (SAT)
+    // Broad collision check with the templates SAT
     auto infoAB = collisionTools::checkCollisionSAT(rbaMat, rbbMat);
     auto infoBA = collisionTools::checkCollisionSAT(rbbMat, rbaMat);
 
@@ -275,8 +275,9 @@ bool Body::doCollide(Body &rbb, float c)
     if (glm::dot(n, rbb.cm - rba.cm) < 0)
         n = -n;
 
-    // 2. Generate Manifold (Clipping)
-    std::vector<glm::vec3> faceA, faceB;
+    // Generate contact polygon; this polygon describes the area where the two cubes overlap
+    // e.g. is a full square when perfectly aligned, or a smaller rectangle when the cubes are shifted 
+    std::vector<glm::vec3> faceA, faceB; // The colliding faces of the two cubes, we use the normal to find the best one
     getBestFace(rba, n, faceA);
     getBestFace(rbb, -n, faceB);
 
@@ -296,6 +297,8 @@ bool Body::doCollide(Body &rbb, float c)
             break;
     }
 
+    // Create manifolds; these are kinda similar to the collision point from the original SAT
+    // but we use multiple ones, to apply a force to each point. Makes it more stable
     std::vector<glm::vec3> manifolds;
     float maxDepth = 0.0f;
     for (const auto &p : contactPoly)
@@ -315,7 +318,7 @@ bool Body::doCollide(Body &rbb, float c)
         maxDepth = info.depth;
     }
 
-    // 3. Position Correction
+    // Position Correction, when blocks intersect. prevents huge forces etc.
     if (maxDepth > 0.001f)
     {
         float totalInvMass = rba.inverseMass + rbb.inverseMass;
@@ -327,9 +330,8 @@ bool Body::doCollide(Body &rbb, float c)
             rbb.cm += correctionVec * rbb.inverseMass;
     }
 
-    // 4. Apply Impulses Iteratively (Normal + Friction)
+    // Apply Impulses Iteratively (Normal + Friction)
     int iterations = 8;
-    float friction = 0.4f; // 0.0 = ice, 1.0 = rubber
 
     for (int k = 0; k < iterations; k++)
     {
@@ -338,7 +340,7 @@ bool Body::doCollide(Body &rbb, float c)
             glm::vec3 r1 = p - rba.cm;
             glm::vec3 r2 = p - rbb.cm;
 
-            // --- NORMAL IMPULSE ---
+            // Normal impulse (from the collision as we know it from before)
             glm::vec3 v1 = rba.linearVelocity + glm::cross(rba.angularVelocity, r1);
             glm::vec3 v2 = rbb.linearVelocity + glm::cross(rbb.angularVelocity, r2);
             glm::vec3 vrel = v2 - v1;
@@ -355,6 +357,7 @@ bool Body::doCollide(Body &rbb, float c)
 
             glm::vec3 impulse = n * j;
 
+            // skip fixed bodies
             if (!rba.fixed)
             {
                 rba.linearVelocity -= impulse * rba.inverseMass;
@@ -368,34 +371,34 @@ bool Body::doCollide(Body &rbb, float c)
                 rbb.angularVelocity = rbb.inertia * rbb.angularMomentum;
             }
 
-            // --- FRICTION IMPULSE ---
-            // Re-calculate relative velocity because Normal impulse changed it
+            // Friction
+            // relative velocity changed due to impluse, we calculate again
             v1 = rba.linearVelocity + glm::cross(rba.angularVelocity, r1);
             v2 = rbb.linearVelocity + glm::cross(rbb.angularVelocity, r2);
             vrel = v2 - v1;
 
-            // Get tangent direction (velocity along the surface)
+            // Get tangent direction (velocity along the surface), i.e. sliding dir
             glm::vec3 tangent = vrel - n * glm::dot(vrel, n);
             float tangentLen = glm::length(tangent);
 
-            if (tangentLen > 0.0001f)
+            if (tangentLen > 0.0001f) // lower limit
             {
-                tangent /= tangentLen; // Normalize
+                tangent /= tangentLen; // Normalize tangent
 
-                // Solve for tangent impulse magnitude
+                // fricition tangents on both blocks
                 glm::vec3 ft1 = glm::cross(rba.inertia * glm::cross(r1, tangent), r1);
                 glm::vec3 ft2 = glm::cross(rbb.inertia * glm::cross(r2, tangent), r2);
                 float fDenom = rba.inverseMass + rbb.inverseMass + glm::dot(ft1 + ft2, tangent);
 
                 float jt = -glm::dot(vrel, tangent) / fDenom;
 
-                // Coulomb Friction Clamp:
-                // Friction force cannot exceed (Friction Coeff * Normal Force)
+                // Clamp friction
                 float maxJt = friction * j;
                 jt = glm::clamp(jt, -maxJt, maxJt);
 
                 glm::vec3 frictionImpulse = tangent * jt;
 
+                // Again ignore fixed bodies
                 if (!rba.fixed)
                 {
                     rba.linearVelocity -= frictionImpulse * rba.inverseMass;

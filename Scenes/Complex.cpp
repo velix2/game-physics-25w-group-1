@@ -64,7 +64,7 @@ void Complex::simulateStep()
         {
             for (size_t j = i + 1; j < bodies.size(); j++)
             {
-                bodies[i].doCollide(bodies[j], c);
+                bodies[i].doCollide(bodies[j], c, friction);
             }
         }
 
@@ -140,6 +140,7 @@ void Complex::onDraw(Renderer &renderer)
 void Complex::onGUI()
 {
     ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
+    ImGui::SliderFloat("Friction", &friction, 0, 1);
     ImGui::Checkbox("Paused", &paused);
     auto btnOneStep = ImGui::Button("Step");
     if (btnOneStep)
@@ -148,5 +149,5 @@ void Complex::onGUI()
     }
     // ImGui::Checkbox("Apply Force", &applyForce);
     ImGui::Text("Right click a body to apply a force.");
-    ImGui::SliderFloat("Click strength", &forceStrength, 0, 10);
+    ImGui::SliderFloat("Click strength", &forceStrength, 0, 100);
 }

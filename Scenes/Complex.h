@@ -15,6 +15,7 @@ class Complex : public Scene
     float dt = 0.01;
     const float c = 0;
     float gravity = -9.81;
+    float friction = 0.4f; // 0.0 = ice, 1.0 = rubber
     bool paused = true;
     bool oneStep = false;
     bool applyForce = true;

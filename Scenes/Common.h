@@ -53,7 +53,7 @@ struct Body
     void draw(Renderer &renderer);
     bool intersectRay(glm::vec3 origin, glm::vec3 direction, glm::vec3 &hitPoint);
     // If this body collides with provided body, apply collision force
-    bool doCollide(Body &other, float c);
+    bool doCollide(Body &other, float c, float friction);
     void print();
     void printPoint(glm::vec3 pos);
 };

@@ -15,6 +15,7 @@ class Collision : public Scene
     bool paused = true;
     bool oneStep = false;
     bool applyForce = true;
+    float friction = 0.4f; // 0.0 = ice, 1.0 = rubber
     float forceStrength = 1.0f;
     glm::vec3 lastcast1;
     glm::vec3 lastcast2;

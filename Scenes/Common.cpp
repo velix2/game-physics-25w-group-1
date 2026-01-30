@@ -140,13 +140,14 @@ void Body::integrate(float dt)
     {
         return;
     }
-    this->cm += dt * this->linearVelocity;
+
     this->linearVelocity += (dt / this->mass) * (this->force);
-    this->orientation = glm::normalize(this->orientation + (dt / 2) * (glm::quat(0, this->angularVelocity) * this->orientation));
     this->angularMomentum += dt * this->torque;
+    this->angularVelocity = this->inertia * this->angularMomentum;
+    this->cm += dt * this->linearVelocity;
+    this->orientation = glm::normalize(this->orientation + (dt / 2) * (glm::quat(0, this->angularVelocity) * this->orientation));
     glm::mat3 rot = static_cast<glm::mat3>(this->orientation);
     this->inertia = rot * this->initialInertia * glm::transpose(rot);
-    this->angularVelocity = this->inertia * this->angularMomentum;
     clearForce();
 }
 
@@ -331,7 +332,7 @@ bool Body::doCollide(Body &rbb, float c, float friction)
     }
 
     // Apply Impulses Iteratively (Normal + Friction)
-    int iterations = 8;
+    int iterations = 32;
 
     for (int k = 0; k < iterations; k++)
     {
@@ -381,7 +382,7 @@ bool Body::doCollide(Body &rbb, float c, float friction)
             glm::vec3 tangent = vrel - n * glm::dot(vrel, n);
             float tangentLen = glm::length(tangent);
 
-            if (tangentLen > 0.0001f) // lower limit
+            if (tangentLen > 0.75f) // lower limit
             {
                 tangent /= tangentLen; // Normalize tangent
 

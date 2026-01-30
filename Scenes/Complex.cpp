@@ -1,8 +1,12 @@
 #include "Complex.h"
 #include <imgui.h>
 
-void SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass)
+// Creates a 3d grid of blocks
+// returns the start index, can be used for the spring stuff
+int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass)
 {
+    auto startIdx = bodies.size();
+
     for (size_t i = 0; i < X; i++)
     {
         for (size_t j = 0; j < Y; j++)
@@ -14,52 +18,72 @@ void SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 bl
             }
         }
     }
+
+    return startIdx;
 }
 
-int ConnectXxYxZBlocks(std::vector<Spring> &springs, std::vector<Body> &bodies, size_t startIndex, int X, int Y, int Z, float restLen, float stiffness)
+void ConnectXxYxZBlocks(std::vector<Spring> &springs, std::vector<Body> &bodies, size_t startIndex, int X, int Y, int Z, float restLen, float stiffness)
 {
-    int blockCount = X * Y * Z;
 
-    for (size_t i = 0; i < X - 1; i++)
+    for (size_t i = 0; i < X; i++)
     {
-        for (size_t j = 0; j < Y - 1; j++)
+        for (size_t j = 0; j < Y; j++)
         {
-            for (size_t k = 0; k < Z - 1; k++)
+            for (size_t k = 0; k < Z; k++)
             {
                 auto idxCenter = startIndex + k + j * Z + i * Z * Y;
                 auto idxX = idxCenter + Y * Z;
                 auto idxY = idxCenter + Z;
                 auto idxZ = idxCenter + 1;
 
-                springs.push_back(Spring(bodies[idxCenter], bodies[idxX], restLen, stiffness));
-                springs.push_back(Spring(bodies[idxCenter], bodies[idxY], restLen, stiffness));
-                springs.push_back(Spring(bodies[idxCenter], bodies[idxZ], restLen, stiffness));
+                if (i < X - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxX], restLen, stiffness));
+                if (j < Y - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxY], restLen, stiffness));
+                if (k < Z - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxZ], restLen, stiffness));
             }
         }
     }
-
-    return blockCount;
 }
 
 void Complex::init()
 {
-    SummonXxYxZBlocks(bodies, glm::vec3(0), glm::vec3(1), glm::vec3(1.25), 3,3,8, 10);
+    auto tower1Idx = SummonXxYxZBlocks(bodies, glm::vec3(5, -2, -3.5), glm::vec3(1.25), glm::vec3(1.3), 4,4,5, 10);
 
     // Floor
-    auto floor = Body(glm::vec3(0,0,-5), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50,50,1), true);
+    auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50, 50, 1), true);
     bodies.push_back(floor);
+
+    // Wrecking ball anchor
+    auto anchorIdx = bodies.size();
+    auto anchor = Body(glm::vec3(0, 0, 10), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(.5f), true);
+    bodies.push_back(anchor);
+
+    // Wrecking ball
+    auto ballIdx = bodies.size();
+    auto ball = Body(glm::vec3(-8, 0, 3), glm::vec3(2,0,-2), glm::quat(glm::vec3(0)), glm::vec3(2), 10000, glm::vec3(2), false);
+    bodies.push_back(ball);
 
     // ALWAYS init springs after bodies cuz of them pointers
     // Not great i know but its fine for now i guess
 
-    ConnectXxYxZBlocks(springs, bodies, 0, 3,3,8, 1.25, 10);
+    // tower one springs
+    ConnectXxYxZBlocks(springs, bodies, tower1Idx, 4,4,5, 1.2, 1000);
+
+    // Wrecking ball spring
+    auto ballSpring = Spring(bodies[anchorIdx], bodies[ballIdx], 11, 500000);
+    springs.push_back(ballSpring);
 }
 
 void Complex::simulateStep()
 {
     if (!paused || oneStep)
     {
-        // Check collisions
+        // Gravity first
+        for (size_t i = 0; i < bodies.size(); i++)
+        {
+            bodies[i].applyDirectForce(glm::vec3(0, 0, gravity * bodies[i].mass));
+        }
+
+        // Do collision checks
         for (size_t i = 0; i < bodies.size() - 1; i++)
         {
             for (size_t j = i + 1; j < bodies.size(); j++)
@@ -67,19 +91,17 @@ void Complex::simulateStep()
                 bodies[i].doCollide(bodies[j], c, friction);
             }
         }
-
-        for (size_t i = 0; i < bodies.size(); i++)
-        {
-            // gravity
-            bodies[i].applyDirectForce(glm::vec3(0, 0, gravity));
-
-            // integration
-            bodies[i].integrate(dt);
-        }
-
+        
+        // Now springs
         for (size_t i = 0; i < springs.size(); i++)
         {
-            springs[i].computeElasticForces(dt);
+            springs[i].computeElasticForces(dt, true);
+        }
+
+        // Integrate bodies positions
+        for (size_t i = 0; i < bodies.size(); i++)
+        {
+            bodies[i].integrate(dt);
         }
 
         oneStep = false;
@@ -97,7 +119,7 @@ void Complex::simulateStep()
             {
                 lastcast1 = hitPoint;
                 lastcast2 = hitPoint + rel;
-                bodies[i].applyForceAt(hitPoint, forceStrength * rel);
+                bodies[i].applyForceAt(hitPoint, forceStrength * rel * bodies[i].mass);
                 break;
             }
         }

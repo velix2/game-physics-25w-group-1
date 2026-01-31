@@ -151,9 +151,15 @@ void Body::integrate(float dt)
     clearForce();
 }
 
-void Body::draw(Renderer &renderer)
+void Body::draw(Renderer &renderer, bool useNativeRendering)
 {
     glm::mat3 rot = static_cast<glm::mat3>(this->orientation);
+
+    if (useNativeRendering) {
+        renderer.drawCube(cm, rot, extent, color);
+        return;
+    }
+
     std::array<glm::vec3, 8> worldPoints;
     // Vertices
     for (size_t i = 0; i < 8; i++)
@@ -184,19 +190,19 @@ void Body::draw(Renderer &renderer)
     glm::vec2 xs = glm::vec2(extent.z, extent.y);
     glm::vec3 xp = cm + rot * (extent * glm::vec3(0.5, 0, 0));
     glm::vec3 xn = cm + rot * (extent * glm::vec3(-0.5, 0, 0));
-    renderer.drawQuad(xp, rotx, xs, glm::vec4(0.3, 0.3, 0.3, 1));
-    renderer.drawQuad(xn, rotx, xs, glm::vec4(0.3, 0.3, 0.3, 1));
+    renderer.drawQuad(xp, rotx, xs, color);
+    renderer.drawQuad(xn, rotx, xs, color);
     glm::mat3 roty = rot * static_cast<glm::mat3>(glm::quat(glm::vec3(glm::pi<float>() / 2, 0, 0)));
     glm::vec2 ys = glm::vec2(extent.x, extent.z);
     glm::vec3 yp = cm + rot * (extent * glm::vec3(0, 0.5, 0));
     glm::vec3 yn = cm + rot * (extent * glm::vec3(0, -0.5, 0));
-    renderer.drawQuad(yp, roty, ys, glm::vec4(0.3, 0.3, 0.3, 1));
-    renderer.drawQuad(yn, roty, ys, glm::vec4(0.3, 0.3, 0.3, 1));
+    renderer.drawQuad(yp, roty, ys, color);
+    renderer.drawQuad(yn, roty, ys, color);
     glm::vec2 zs = glm::vec2(extent.x, extent.y);
     glm::vec3 zp = cm + rot * (extent * glm::vec3(0, 0, 0.5));
     glm::vec3 zn = cm + rot * (extent * glm::vec3(0, 0, -0.5));
-    renderer.drawQuad(zp, rot, zs, glm::vec4(0.3, 0.3, 0.3, 1));
-    renderer.drawQuad(zn, rot, zs, glm::vec4(0.3, 0.3, 0.3, 1));
+    renderer.drawQuad(zp, rot, zs, color);
+    renderer.drawQuad(zn, rot, zs, color);
 }
 
 float max(float a, float b)

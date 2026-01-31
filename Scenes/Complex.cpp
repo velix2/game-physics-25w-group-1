@@ -3,7 +3,7 @@
 
 // Creates a 3d grid of blocks
 // returns the start index, can be used for the spring stuff
-int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass)
+int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass, glm::vec4 color)
 {
     auto startIdx = bodies.size();
 
@@ -13,7 +13,7 @@ int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blo
         {
             for (size_t k = 0; k < Z; k++)
             {
-                auto b = Body(anchor + glm::vec3(i * spacing.x, j * spacing.y, k * spacing.z), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), mass, blocksize, false);
+                auto b = Body(anchor + glm::vec3(i * spacing.x, j * spacing.y, k * spacing.z), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), mass, blocksize, false, color);
                 bodies.push_back(b);
             }
         }
@@ -46,7 +46,7 @@ void ConnectXxYxZBlocks(std::vector<Spring> &springs, std::vector<Body> &bodies,
 
 void Complex::init()
 {
-    auto tower1Idx = SummonXxYxZBlocks(bodies, glm::vec3(5, -2, -3.5), glm::vec3(1.25), glm::vec3(1.3), 4,4,5, 10);
+    auto tower1Idx = SummonXxYxZBlocks(bodies, glm::vec3(5, -2, -3.5), glm::vec3(1.25), glm::vec3(1.3), 4,4,5, 10, glm::vec4(1,0,0,1));
 
     // Floor
     auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50, 50, 1), true);
@@ -134,7 +134,7 @@ void Complex::onDraw(Renderer &renderer)
     // Draw bodies
     for (size_t i = 0; i < bodies.size(); i++)
     {
-        bodies[i].draw(renderer);
+        bodies[i].draw(renderer, useNativeCubeRendering);
     }
 
     // Draw springs
@@ -161,6 +161,8 @@ void Complex::onDraw(Renderer &renderer)
 
 void Complex::onGUI()
 {
+    ImGui::Checkbox("Native Cubes", &useNativeCubeRendering);
+    ImGui::Separator();
     ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
     ImGui::SliderFloat("Friction", &friction, 0, 1);
     ImGui::Checkbox("Paused", &paused);

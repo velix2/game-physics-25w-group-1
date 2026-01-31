@@ -31,12 +31,14 @@ struct Body
     float inverseMass;                      // M^-1
     float damping;
 
+    glm::vec4 color;
+
     Body(){}
 
-    Body(glm::vec3 cm, glm::vec3 linearVelocity, glm::quat orientation, glm::vec3 angularMomentum, float mass, glm::vec3 extent, bool fixed)
+    Body(glm::vec3 cm, glm::vec3 linearVelocity, glm::quat orientation, glm::vec3 angularMomentum, float mass, glm::vec3 extent, bool fixed, glm::vec4 color = glm::vec4(0.3, 0.3, 0.3, 1))
         : fixed(fixed), cm(cm), offsets(compOffsets(extent)), extent(extent), force(glm::vec3(0)), torque(glm::vec3(0)), orientation(orientation),
           initialInertia(fixed ? glm::mat3(0) : compInitialInertia(extent, mass)), angularMomentum(angularMomentum), linearVelocity(linearVelocity), mass(mass),
-          inverseMass(fixed ? 0 : 1.0 / mass), damping(0.005)
+          inverseMass(fixed ? 0 : 1.0 / mass), damping(0.005), color(color)
     {
         glm::mat3 rot = static_cast<glm::mat3>(this->orientation);
         this->inertia = rot * this->initialInertia * glm::transpose(rot);
@@ -50,7 +52,7 @@ struct Body
     void applyForceAt(glm::vec3 pos, glm::vec3 force);
     void applyDirectForce(glm::vec3 force);
     void integrate(float dt);
-    void draw(Renderer &renderer);
+    void draw(Renderer &renderer, bool useNativeRendering = false);
     bool intersectRay(glm::vec3 origin, glm::vec3 direction, glm::vec3 &hitPoint);
     // If this body collides with provided body, apply collision force
     bool doCollide(Body &other, float c, float friction);

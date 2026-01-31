@@ -19,6 +19,7 @@ class Complex : public Scene
     bool paused = true;
     bool oneStep = false;
     bool applyForce = true;
+    bool useNativeCubeRendering = false;
     float forceStrength = 1.0f;
     glm::vec3 lastcast1 = glm::vec3(0);
     glm::vec3 lastcast2 = glm::vec3(0);

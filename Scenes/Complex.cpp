@@ -49,17 +49,17 @@ void Complex::init()
     auto tower1Idx = SummonXxYxZBlocks(bodies, glm::vec3(5, -2, -3.5), glm::vec3(1.25), glm::vec3(1.3), 4,4,5, 10, glm::vec4(1,0,0,1));
 
     // Floor
-    auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50, 50, 1), true);
+    auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50, 50, 1), true, glm::vec4(0.1, 0.1, 0.1, 1));
     bodies.push_back(floor);
 
     // Wrecking ball anchor
     auto anchorIdx = bodies.size();
-    auto anchor = Body(glm::vec3(0, 0, 10), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(.5f), true);
+    auto anchor = Body(glm::vec3(0, 0, 10), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(.5f), true, glm::vec4(0.1, 0.1, 0.1, 1));
     bodies.push_back(anchor);
 
     // Wrecking ball
     auto ballIdx = bodies.size();
-    auto ball = Body(glm::vec3(-8, 0, 3), glm::vec3(2,0,-2), glm::quat(glm::vec3(0)), glm::vec3(2), 10000, glm::vec3(2), false);
+    auto ball = Body(glm::vec3(-8, 0, 3), glm::vec3(2,0,-2), glm::quat(glm::vec3(0)), glm::vec3(2), 10000, glm::vec3(2), false, glm::vec4(0.6, 0.6, 0.6, 1));
     bodies.push_back(ball);
 
     // ALWAYS init springs after bodies cuz of them pointers

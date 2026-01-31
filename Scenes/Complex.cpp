@@ -200,7 +200,7 @@ void Complex::onGUI()
     else
     {
         ImGui::SeparatorText("Reset");
-        if (ImGui::Button("Reset Simulation"))
+        if (ImGui::Button("Reset Simulation (Retains Settings)"))
         {
             bodies.clear();
             springs.clear();

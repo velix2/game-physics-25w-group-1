@@ -531,3 +531,11 @@ void getBestFace(Body &body, glm::vec3 normal, std::vector<glm::vec3> &outVertic
     for (int i = 0; i < 4; i++)
         outVertices.push_back(body.cm + rot * v[i]);
 }
+
+glm::vec4 getRandomColor()
+{
+    float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    float g = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    float b = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    return glm::vec4(r, g, b, 1.0f); // Alpha is set to 1.0 for full opacity
+}

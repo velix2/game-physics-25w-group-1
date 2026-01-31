@@ -31,6 +31,19 @@ class Complex : public Scene
     glm::vec3 fwd = glm::vec3(1, 0, 0);
     glm::vec3 right = glm::vec3(0, 1, 0);
     glm::vec3 up = glm::vec3(0, 0, 1);
+
+    // Cube tower
+    glm::vec3 blocksize = glm::vec3(1);
+    glm::vec3 spacing = glm::vec3(1.25f);
+    int blockCountsXYZ[3] = {3,3,5};
+    float mass = 2;
+    bool createSprings = true;
+    float restLength = 1.25;
+    float springStiffness = 8;
+
+    bool hasTowerBeenSpawned = false;
+
+
     virtual void init() override;
     /// This is where you should update the physics of the scene.
     virtual void simulateStep() override;

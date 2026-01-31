@@ -83,3 +83,5 @@ struct ContactPoint {
 void getBestFace(Body& body, glm::vec3 normal, std::vector<glm::vec3>& outVertices);
 
 std::vector<glm::vec3> clip(const std::vector<glm::vec3>& vertices, glm::vec3 planePos, glm::vec3 planeNormal);
+
+glm::vec4 getRandomColor();

@@ -3,7 +3,7 @@
 
 // Creates a 3d grid of blocks
 // returns the start index, can be used for the spring stuff
-int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass, glm::vec4 color)
+int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blocksize, glm::vec3 spacing, int X, int Y, int Z, float mass)
 {
     auto startIdx = bodies.size();
 
@@ -13,7 +13,7 @@ int SummonXxYxZBlocks(std::vector<Body> &bodies, glm::vec3 anchor, glm::vec3 blo
         {
             for (size_t k = 0; k < Z; k++)
             {
-                auto b = Body(anchor + glm::vec3(i * spacing.x, j * spacing.y, k * spacing.z), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), mass, blocksize, false, color);
+                auto b = Body(anchor + glm::vec3(i * spacing.x, j * spacing.y, k * spacing.z), glm::vec3(0, 0, 0), glm::quat(glm::vec3(0, 0, 0)), glm::vec3(0), mass, blocksize, false, getRandomColor());
                 bodies.push_back(b);
             }
         }
@@ -36,20 +36,37 @@ void ConnectXxYxZBlocks(std::vector<Spring> &springs, std::vector<Body> &bodies,
                 auto idxY = idxCenter + Z;
                 auto idxZ = idxCenter + 1;
 
-                if (i < X - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxX], restLen, stiffness));
-                if (j < Y - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxY], restLen, stiffness));
-                if (k < Z - 1) springs.push_back(Spring(bodies[idxCenter], bodies[idxZ], restLen, stiffness));
+                if (i < X - 1)
+                    springs.push_back(Spring(bodies[idxCenter], bodies[idxX], restLen, stiffness));
+                if (j < Y - 1)
+                    springs.push_back(Spring(bodies[idxCenter], bodies[idxY], restLen, stiffness));
+                if (k < Z - 1)
+                    springs.push_back(Spring(bodies[idxCenter], bodies[idxZ], restLen, stiffness));
             }
         }
     }
 }
 
+void SummonTower(std::vector<Body> &bodies, glm::vec3 blocksize, glm::vec3 spacing, int blockCountsXYZ[3], float mass, bool createSprings, std::vector<Spring> &springs, float restLen, float stiffness)
+{
+    auto anchorOffsetY = (spacing.y * (blockCountsXYZ[1] - 1)) / 2; // Center along y axis
+    auto anchorOffsetZ = (spacing.z * (blockCountsXYZ[2] - 1)) / 2; // Center along y axis
+
+    auto anchor = glm::vec3(3, -anchorOffsetY, -2 + anchorOffsetZ);
+
+    auto towerIdx = SummonXxYxZBlocks(bodies, anchor, blocksize, spacing, blockCountsXYZ[0], blockCountsXYZ[1], blockCountsXYZ[2], mass);
+
+    // tower one springs
+    if (createSprings)
+        ConnectXxYxZBlocks(springs, bodies, towerIdx, blockCountsXYZ[0], blockCountsXYZ[1], blockCountsXYZ[2], 1.2, 1000);
+}
+
 void Complex::init()
 {
-    auto tower1Idx = SummonXxYxZBlocks(bodies, glm::vec3(5, -2, -3.5), glm::vec3(1.25), glm::vec3(1.3), 4,4,5, 10, glm::vec4(1,0,0,1));
+    bodies.reserve(256);
 
     // Floor
-    auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(50, 50, 1), true, glm::vec4(0.1, 0.1, 0.1, 1));
+    auto floor = Body(glm::vec3(0, 0, -4.75), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1000, glm::vec3(40, 30, 1), true, glm::vec4(0.1, 0.1, 0.1, 1));
     bodies.push_back(floor);
 
     // Wrecking ball anchor
@@ -59,14 +76,11 @@ void Complex::init()
 
     // Wrecking ball
     auto ballIdx = bodies.size();
-    auto ball = Body(glm::vec3(-8, 0, 3), glm::vec3(2,0,-2), glm::quat(glm::vec3(0)), glm::vec3(2), 10000, glm::vec3(2), false, glm::vec4(0.6, 0.6, 0.6, 1));
+    auto ball = Body(glm::vec3(-8, 0, 3), glm::vec3(2, 0, -2), glm::normalize(glm::quat(glm::vec3(PI_4))), glm::vec3(2), 10000, glm::vec3(2), false, glm::vec4(0.6, 0.6, 0.6, 1));
     bodies.push_back(ball);
 
     // ALWAYS init springs after bodies cuz of them pointers
     // Not great i know but its fine for now i guess
-
-    // tower one springs
-    ConnectXxYxZBlocks(springs, bodies, tower1Idx, 4,4,5, 1.2, 1000);
 
     // Wrecking ball spring
     auto ballSpring = Spring(bodies[anchorIdx], bodies[ballIdx], 11, 500000);
@@ -91,7 +105,7 @@ void Complex::simulateStep()
                 bodies[i].doCollide(bodies[j], c, friction);
             }
         }
-        
+
         // Now springs
         for (size_t i = 0; i < springs.size(); i++)
         {
@@ -113,7 +127,7 @@ void Complex::simulateStep()
         glm::vec3 hitPoint;
 
         glm::vec3 rel = screenToWorldRay(projMatrix, cameraMatrix, pos.x, pos.y, windowSize.x, windowSize.y);
-        for (size_t i = 0; i < NUM_BODIES; i++)
+        for (size_t i = 0; i < bodies.size(); i++)
         {
             if (bodies[i].intersectRay(cameraPosition, rel, hitPoint))
             {
@@ -162,6 +176,42 @@ void Complex::onDraw(Renderer &renderer)
 void Complex::onGUI()
 {
     ImGui::Checkbox("Native Cubes", &useNativeCubeRendering);
+
+    if (!hasTowerBeenSpawned)
+    {
+        ImGui::SeparatorText("Spawn Cube Tower");
+
+        ImGui::DragFloat3("Block Size", &blocksize[0], 0.1f, 0.1f, 10.0f);
+        ImGui::DragFloat3("Spacing", &spacing[0], 0.1f, 0.1f, 10.0f);
+        ImGui::InputInt3("Block Counts (X, Y, Z)", blockCountsXYZ);
+        ImGui::DragFloat("Block Mass", &mass, 0.1f, 0.1f, 100.0f);
+        ImGui::Checkbox("Create Springs", &createSprings);
+        if (createSprings)
+        {
+            ImGui::DragFloat("Spring Rest Length", &restLength, 0.1f, 0.1f, 10.0f);
+            ImGui::DragFloat("Spring Stiffness", &springStiffness, 0.1f, 0.1f, 1000.0f);
+        }
+        if (ImGui::Button("Spawn Tower"))
+        {
+            SummonTower(bodies, blocksize, spacing, blockCountsXYZ, mass, createSprings, springs, restLength, springStiffness);
+            hasTowerBeenSpawned = true;
+        }
+    }
+    else
+    {
+        ImGui::SeparatorText("Reset");
+        if (ImGui::Button("Reset Simulation"))
+        {
+            bodies.clear();
+            springs.clear();
+
+            paused = true;
+            hasTowerBeenSpawned = false;
+
+            init();
+        }
+    }
+
     ImGui::Separator();
     ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
     ImGui::SliderFloat("Friction", &friction, 0, 1);

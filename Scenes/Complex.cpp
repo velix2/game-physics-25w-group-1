@@ -71,7 +71,7 @@ void Complex::init()
 
     // Wrecking ball anchor
     auto anchorIdx = bodies.size();
-    auto anchor = Body(glm::vec3(0, 0, 10), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(.5f), true, glm::vec4(0.1, 0.1, 0.1, 1));
+    auto anchor = Body(glm::vec3(0, 0, 10), glm::vec3(0), glm::quat(glm::vec3(0)), glm::vec3(0), 1, glm::vec3(.5f), true, glm::vec4(0, 0, 0, 1));
     bodies.push_back(anchor);
 
     // Wrecking ball
@@ -175,7 +175,8 @@ void Complex::onDraw(Renderer &renderer)
 
 void Complex::onGUI()
 {
-    ImGui::Checkbox("Native Cubes", &useNativeCubeRendering);
+    ImGui::SeparatorText("Rendering");
+    ImGui::Checkbox("Render As Native Cubes", &useNativeCubeRendering);
 
     if (!hasTowerBeenSpawned)
     {
@@ -212,16 +213,19 @@ void Complex::onGUI()
         }
     }
 
-    ImGui::Separator();
+    ImGui::SeparatorText("Interaction");
+    ImGui::Text("Right click a body to apply a force.");
+    ImGui::SliderFloat("Click strength", &forceStrength, 0, 250);
+
+    ImGui::SeparatorText("Simulation Controls");
     ImGui::SliderFloat("Dt", &dt, 0, 0.1f);
     ImGui::SliderFloat("Friction", &friction, 0, 1);
+    ImGui::Separator();
     ImGui::Checkbox("Paused", &paused);
-    auto btnOneStep = ImGui::Button("Step");
+    auto btnOneStep = ImGui::Button("Simulate Step");
     if (btnOneStep)
     {
         oneStep = true;
     }
-    // ImGui::Checkbox("Apply Force", &applyForce);
-    ImGui::Text("Right click a body to apply a force.");
-    ImGui::SliderFloat("Click strength", &forceStrength, 0, 100);
+
 }

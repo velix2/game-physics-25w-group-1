@@ -20,7 +20,7 @@ class Complex : public Scene
     bool oneStep = false;
     bool applyForce = true;
     bool useNativeCubeRendering = false;
-    float forceStrength = 1.0f;
+    float forceStrength = 50.0f;
     glm::vec3 lastcast1 = glm::vec3(0);
     glm::vec3 lastcast2 = glm::vec3(0);
     glm::mat4 cameraMatrix = glm::mat4(1);

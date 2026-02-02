@@ -58,7 +58,7 @@ void SummonTower(std::vector<Body> &bodies, glm::vec3 blocksize, glm::vec3 spaci
 
     // tower one springs
     if (createSprings)
-        ConnectXxYxZBlocks(springs, bodies, towerIdx, blockCountsXYZ[0], blockCountsXYZ[1], blockCountsXYZ[2], 1.2, 1000);
+        ConnectXxYxZBlocks(springs, bodies, towerIdx, blockCountsXYZ[0], blockCountsXYZ[1], blockCountsXYZ[2], restLen, stiffness);
 }
 
 void Complex::init()

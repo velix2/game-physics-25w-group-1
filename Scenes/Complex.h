@@ -38,8 +38,8 @@ class Complex : public Scene
     int blockCountsXYZ[3] = {3,3,5};
     float mass = 2;
     bool createSprings = true;
-    float restLength = 1.25;
-    float springStiffness = 8;
+    float restLength = 1.20;
+    float springStiffness = 500;
 
     bool hasTowerBeenSpawned = false;
 
